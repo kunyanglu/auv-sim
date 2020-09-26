@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import catalina
 
-from astar_fixLenSOG import singleAUV
+from astar_singleAUV import singleAUV
 from motion_plan_state import Motion_plan_state
 from shapely.wkt import loads as load_wkt 
 from shapely.geometry import Polygon 
 from sharkOccupancyGrid import SharkOccupancyGrid, splitCell
 from matplotlib import cm, patches, collections
-from astar_fixLenSOG import createSharkGrid
+from astar_singleAUV import createSharkGrid
 from cost import Cost
 
 class multiAUV:

@@ -20,11 +20,10 @@ class SharkOccupancyGrid:
         grid will be used
     '''
 
-    def __init__(self, cell_size, boundary, bin_interval, detect_range, cell_list=None):
+    def __init__(self, shark_dict, cell_size, boundary, bin_interval, detect_range):
         '''
         create a occupancy dictionary to store occupancy grid maps at different time bins
         key is time bin, value is the corresponding occupancy grid map
-
         paramaters:
             shark_dict: a dictionary representing shark trajectories, key is shark_id and value is the corresponding trajectory
             cell_size: cell size in meters
@@ -33,18 +32,16 @@ class SharkOccupancyGrid:
             detect_range: the maximum distance hydrophone can track sharks, in meters
         the probability of occupancy of each cell is calculated by the time sharks spent in the cell / duration of time bin
         '''
+        self.data = shark_dict
         self.cell_size = cell_size
-
-        if cell_list:
-            self.cell_list = cell_list
-        else:
-            self.cell_list = splitCell(boundary, cell_size)
-        
+        self.cell_list = splitCell(boundary, cell_size)
         self.bin_interval = bin_interval
         self.detect_range = detect_range
         self.boundary = boundary
+
+        self.bin_list = self.createBinList()
     
-    def convert(self, shark_dict):
+    def convert(self):
         '''
         convert a dictionary of shark trajectories
             key: shark ID, int
@@ -56,9 +53,8 @@ class SharkOccupancyGrid:
                 key: timebin, tuple(start time, end time)
                 value: a dictionary representing occupancy grid of each shark during this time bin
         '''
-        self.data = shark_dict
+
         #convert to a dictionary, whose key is time bin
-        self.bin_list = self.createBinList()
         self.timeBinDict = self.convertToTimeBin()
 
         resultArr = {}
@@ -116,37 +112,11 @@ class SharkOccupancyGrid:
                 final_result.append(g)
         return final_result
     
-    def constructAllSharkGrid(self, shark_traj_dict):
-        '''
-        create a single shark occupancy grid during one time bin for all sharks by addition
-
-        parameters: 
-        shark_traj_dict: a dictionary stored separate shark trajectories within the single time bin
-        output: a dictionary representing the shark occupancy value of each cell
-            key: Polygon object representing each cell
-            value: occupancy probability of the cell, calculated by num of sharks * average time sharks spent in this cell
-        '''
-        #initialize shark occupancy grid
-        minx, miny, maxx, maxy = self.boundary.bounds
-        grid = [[0 for _ in range(int(math.ceil(maxx - minx) / self.cell_size)+1)] for _ in range(int(math.ceil(maxy - miny) / self.cell_size)+1)]
-
-        for _, traj in shark_traj_dict.items():
-            tempOccGrid = self.constructSharkOccupancyGrid(traj)
-            for i in range(len(grid)):
-                for j in range(len(grid[0])):
-                    grid[i][j] = grid[i][j] + tempOccGrid[i][j]
-
-        for i in range(len(grid)):
-            for j in range(len(grid[0])):
-                grid[i][j] = grid[i][j] / len(list(shark_traj_dict.keys()))
-        
-        return grid
-
     def constructGrid(self, shark_traj_dict):
         '''
         create a single AUV detecting grid at during one time bin for multiple sharks
         the detecting probability of each cell represents the probability AUV can detect sharks in this cell
-            calculated by adding probability of this cell for each cell together
+            calculated by multiply probability of this cell for each cell together
         
         parameters:
             shark_traj_dict: a dictionary stored separate shark trajectories within the single time bin
@@ -179,10 +149,8 @@ class SharkOccupancyGrid:
             calculated by the sum of shark occupancy of all nearby cells within hydrophone range
         
         for each cell in the work space, sum up the occupancy of cells within detect_range if AUV resides in this cell
-
         parameter:
             occGrid: occupancy grid for a single shark during one time bin
-
         output: an AUV detecting grid representing AUV detecting probability of each cell
             note: AUV detecting probability of each cell should be no larger than 1
         '''
@@ -211,7 +179,6 @@ class SharkOccupancyGrid:
         
         parameter:
             traj: single shark trajectory, a list of motion_plan_state
-
         output:
             an occupancy grid representing the occupancy of this shark at each cell during the time bin
         '''
@@ -331,10 +298,10 @@ class SharkOccupancyGrid:
         return grid
 
     def plot(self, grid_dict):
-        fig = plt.figure(1, figsize=(10, 10))
+        fig = plt.figure(1, figsize=(10,15))
         x,y = self.boundary.exterior.xy
         for i in range(len(list(grid_dict.keys()))):
-            ax = fig.add_subplot(1, 2, i+1)
+            ax = fig.add_subplot(5, 2, i+1)
             ax.plot(x, y, color="black")
 
             patch = []
@@ -344,6 +311,8 @@ class SharkOccupancyGrid:
                 polygon = patches.Polygon(list(cell.exterior.coords), True)
                 patch.append(polygon)
                 row, col = self.cellToIndex(cell)
+                # print ("\n", "row: ", row, "column: ", col, "row limit: ", len(grid_dict[key]), "column limit: ", len(grid_dict[key][0]))
+                # print ("\n", "row: ", row, "column: ", col)
                 occ.append(grid_dict[key][row][col])
 
             p = collections.PatchCollection(patch)
@@ -357,21 +326,11 @@ class SharkOccupancyGrid:
 
             ax.title.set_text(str(list(grid_dict.keys())[i]))
         
-            # for shark_id, traj in self.timeBinDict[key].items():
-            #     ax.plot([mps.x for mps in traj], [mps.y for mps in traj], label=shark_id)
+            for shark_id, traj in self.timeBinDict[key].items():
+                ax.plot([mps.x for mps in traj], [mps.y for mps in traj], label=shark_id)
         
         plt.legend(loc="lower right")
         plt.show()
-    
-def plotShark(boundary, shark_dict):
-    plt.figure()
-    x,y = boundary.exterior.xy
-    plt.plot(x, y, color="black")
-    for sharkID, traj in shark_dict.items():
-        plt.plot([mps.x for mps in traj], [mps.y for mps in traj], label=sharkID)
-    
-    plt.legend()
-    plt.show()
 
 def splitCell(polygon, cell_size):
     minx, miny, maxx, maxy = polygon.bounds
@@ -391,43 +350,15 @@ def splitCell(polygon, cell_size):
         result = MultiPolygon(split(result, splitter))
         
     return result
+        
 
-def getGridByTime(time, gridDict):
-    '''
-    Given a specific time stamp, find the corresponding shark occupancy grid / AUV detecting grid in the dictionary
-
-    parameters:
-        time: time stamp
-        gridDict: a dictionary, whose key is time bin and value is the corresponding grid during this time bin
-    '''
-    for timebin, grid in gridDict.items():
-        if time >= timebin[0] and time <= timebin[1]:
-            return grid
-
-def getGridByInterval(interval, gridDict):
-    '''
-    Given a time interval, find all shark occupancy grids / AUV detecting grids within this time interval
-
-    parameters:
-        interval: time interval
-        gridDict: a dictionary, whose key is time bin and value is the corresponding grid during this time bin
-    
-    output:
-        res: a distionary consisting of all grids in this interval
-    '''
-    res = {}    
-    for time_bin in gridDict:
-        if (interval[0] >= time_bin[0] and interval[0] <= time_bin[1]) or (time_bin[0] >= interval[0] and time_bin[1] <= interval[1]) or(interval[1] >= time_bin[0] and interval[1] <= time_bin[1]):
-            res[time_bin] = gridDict[time_bin]
-    
-    return res
 
 # boundary_poly = []
 # for b in catalina.BOUNDARIES:
 #     pos = catalina.create_cartesian((b.x, b.y), catalina.ORIGIN_BOUND)
 #     boundary_poly.append((pos[0],pos[1]))
 # boundary_poly = Polygon(boundary_poly)
-# shark_dict1 = {1: [Motion_plan_state(-120 + (0.2 * i), -60 + (0.2 * i), traj_time_stamp=i) for i in range(1,501)], 
+# shark_dict = {1: [Motion_plan_state(-120 + (0.2 * i), -60 + (0.2 * i), traj_time_stamp=i) for i in range(1,501)], 
 #     2: [Motion_plan_state(-65 - (0.2 * i), -50 + (0.2 * i), traj_time_stamp=i) for i in range(1,501)],
 #     3: [Motion_plan_state(-110 + (0.2 * i), -40 - (0.2 * i), traj_time_stamp=i) for i in range(1,501)], 
 #     4: [Motion_plan_state(-105 - (0.2 * i), -55 + (0.2 * i), traj_time_stamp=i) for i in range(1,501)],
@@ -437,26 +368,16 @@ def getGridByInterval(interval, gridDict):
 #     8: [Motion_plan_state(-250 - (0.2 * i), 75 + (0.2 * i), traj_time_stamp=i) for i in range(1,501)],
 #     9: [Motion_plan_state(-260 - (0.2 * i), 75 + (0.2 * i), traj_time_stamp=i) for i in range(1,501)], 
 #     10: [Motion_plan_state(-275 + (0.2 * i), 80 - (0.2 * i), traj_time_stamp=i) for i in range(1,501)]}
-# shark_dict2 = {1: [Motion_plan_state(-120 + (0.1 * i), -60 + (0.1 * i), traj_time_stamp=i) for i in range(1,301)]+ [Motion_plan_state(-90 - (0.1 * (i - 301)), -30 + (0.15 * (i - 301)), traj_time_stamp=i) for i in range(302,501)], 
-#     2: [Motion_plan_state(-65 - (0.1 * i), -50 + (0.1 * i), traj_time_stamp=i) for i in range(1,301)] + [Motion_plan_state(-95 + (0.15 * (i - 301)), -20 + (0.1 * (i - 301)), traj_time_stamp=i) for i in range(302,501)],
-#     3: [Motion_plan_state(-110 + (0.1 * i), -40 - (0.1 * i), traj_time_stamp=i) for i in range(1,301)] + [Motion_plan_state(-80 + (0.15 * (i - 301)), -70 + (0.1 * (i - 301)), traj_time_stamp=i) for i in range(302,501)], 
-#     4: [Motion_plan_state(-105 - (0.1 * i), -55 + (0.1 * i), traj_time_stamp=i) for i in range(1,301)] + [Motion_plan_state(-135 + (0.12 * (i - 301)), -25 + (0.07 * (i - 301)), traj_time_stamp=i) for i in range(302,501)],
-#     5: [Motion_plan_state(-120 + (0.1 * i), -50 - (0.1 * i), traj_time_stamp=i) for i in range(1,301)] + [Motion_plan_state(-90 + (0.11 * (i - 301)), -80 + (0.1 * (i - 301)), traj_time_stamp=i) for i in range(302,501)], 
-#     6: [Motion_plan_state(-85 - (0.1 * i), -55 + (0.1 * i), traj_time_stamp=i) for i in range(1,301)] + [Motion_plan_state(-115 - (0.09 * (i - 301)), -25 - (0.1 * (i - 301)), traj_time_stamp=i) for i in range(302,501)],
-#     7: [Motion_plan_state(-270 + (0.1 * i), 50 + (0.1 * i), traj_time_stamp=i) for i in range(1,301)] + [Motion_plan_state(-240 - (0.08 * (i - 301)), 80 + (0.1 * (i - 301)), traj_time_stamp=i) for i in range(302,501)], 
-#     8: [Motion_plan_state(-250 - (0.1 * i), 75 + (0.1 * i), traj_time_stamp=i) for i in range(1,301)] + [Motion_plan_state(-280 - (0.1 * (i - 301)), 105 - (0.1 * (i - 301)), traj_time_stamp=i) for i in range(302,501)],
-#     9: [Motion_plan_state(-260 - (0.1 * i), 75 + (0.1 * i), traj_time_stamp=i) for i in range(1,301)] + [Motion_plan_state(-290 + (0.08 * (i - 301)), 105 + (0.07 * (i - 301)), traj_time_stamp=i) for i in range(302,501)], 
-#     10: [Motion_plan_state(-275 + (0.1 * i), 80 - (0.1 * i), traj_time_stamp=i) for i in range(1,301)]+ [Motion_plan_state(-245 - (0.13 * (i - 301)), 50 - (0.12 * (i - 301)), traj_time_stamp=i) for i in range(302,501)]}
-# testing = SharkOccupancyGrid(shark_dict2, 10, boundary_poly, 50, 50)
+# testing = SharkOccupancyGrid(shark_dict, 10, boundary_poly, 50, 50)
 # boundary_poly = box(0.0, 0.0, 10.0, 10.0)
 # shark_dict = {1: [Motion_plan_state(0 + (0.1 * i), 2 + (0.1 * i), traj_time_stamp=0.1*i) for i in range(1,51)]}
 # testing = SharkOccupancyGrid(shark_dict, 2, boundary_poly, 2, 4)
 # occGrid = testing.constructSharkOccupancyGrid(shark_dict[5])
 # auvGrid = testing.constructAUVGrid(occGrid)
 # grid = testing.convert()
-# plotShark(boundary_poly, shark_dict2)
+# testing.plot(grid[0])
 # print(grid[1])
-# with open('AUVGrid_prob_500_turn.csv', 'w', newline='') as csvfile:
+# with open('AUVGrid_prob.csv', 'w', newline='') as csvfile:
 #     fieldnames = ['time bin', 'grid']
 #     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
