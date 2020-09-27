@@ -47,7 +47,8 @@ class astar:
         self.start = start
         self.obstacle_list = obstacleList
         self.boundary_list = boundaryList
-        self.habitat_list = habitatList
+        self.habitat_open_list = habitatList
+        self.habitat_closed_list = []
         self.visited_nodes = np.zeros([600, 600])
         self.velocity = 1 
         
@@ -216,10 +217,8 @@ class astar:
         for index, item in enumerate(habitat_open_list):
             dist = math.sqrt((current_node.position[0]-item.x) **2 + (current_node.position[1]-item.y) **2)
             if dist <= item.size: # current_node covers a habitat
-                habitat_open_list.pop(index)
-                habitat_closed_list.append(item)
-
-        return (habitat_open_list, habitat_closed_list)
+                self.habitat_open_list.pop(index)
+                self.habitat_closed_list.append(item)
     
     def inside_habitats(self, mps, habitats):
         """
@@ -238,75 +237,6 @@ class astar:
                 return True
 
         return False
-        
-    def create_grid_map(self, current_node, neighbor):
-        """
-        Find the grid value of the current node's neighbor;
-        the magnitude of the grid value is influenced by the angle of the current node to the nearest habitat 
-        and whether the current_node covers a habitat
-        Parameter: 
-            current_node: a Node object
-            neighbor: a position tuple of two elements (x_in_meters, y_in_meters)
-        """
-
-        habitat_list = []
-        constant = 1
-
-        for habi in catalina.HABITATS:
-            pos = catalina.create_cartesian((habi.x, habi.y), catalina.ORIGIN_BOUND)
-            habitat_list.append(Motion_plan_state(pos[0], pos[1], size=habi.size))
-
-        target_habitat = habitat_list[0]
-        min_distance = euclidean_dist((target_habitat.x, target_habitat.y), current_node.position)
-
-        for habi in habitat_list:
-            dist = euclidean_dist((habi.x, habi.y), current_node.position)
-            if dist < min_distance:
-                target_habitat = habi
-        
-        # compute Nj 
-        vector_1 = [neighbor[0]-current_node.position[0], neighbor[1]-current_node.position[1]]
-        vector_2 = [target_habitat.x-current_node.position[0], target_habitat.y-current_node.position[1]]
-     
-        unit_vector_1 = vector_1/np.linalg.norm(vector_1)
-        unit_vector_2 = vector_2/np.linalg.norm(vector_2)
-        dot_product = np.dot(unit_vector_1, unit_vector_2)
-        angle = np.arccos(dot_product)
-       
-        Nj = math.cos(angle)
-        
-        # compute Gj 
-        for item in habitat_list:
-            dist = math.sqrt((current_node.position[0]-item.x) **2 + (current_node.position[1]-item.y) **2)
-            if dist <= item.size: # current_node covers a habitat
-                Gj = 1
-            else:
-                Gj = 0
-
-        # compute grid value bj        
-        bj = constant * Nj + Gj 
-
-        return (bj) 
-    
-    def sort_open_list(self, open_list):
-        """
-        Sort open_list in ascending order based on the f value of the node
-        Parameter:
-            open_list: a list of Node objects that are candidates of the next node to add to the path 
-        """
-
-        for i in range(len(open_list)):
-            cursor = open_list[i] 
-            pos = i
-        
-            while pos > 0 and open_list[pos - 1].f > cursor.f:
-                # Swap the number down the list
-                open_list[pos] = open_list[pos - 1]
-                pos = pos - 1
-            # Break and do the final swap
-            open_list[pos] = cursor
-
-        return open_list
     
     def get_indices(self, x_in_meters, y_in_meters):
         """
@@ -390,8 +320,8 @@ class astar:
         closed_list = [] # hold all the exapnded nodes
 
         habitats = habitat_list[:]
-        habitat_open_list = habitat_list # hold haibitats that have not been explored 
-        habitat_closed_list = [] # hold habitats that have been explored 
+        # habitat_open_list = habitat_list # hold haibitats that have not been explored 
+        # habitat_closed_list = [] # hold habitats that have been explored 
 
         open_list.append(start_node)
 
@@ -442,12 +372,9 @@ class astar:
                 if self.collision_free(neighbor, obs_lst):
 
                     new_node = Node(current_node, neighbor)
-                    result = self.update_habitat_coverage(new_node, habitat_open_list, habitat_closed_list)  # update habitat_open_list and habitat_closed_list
-          
-                    habitat_open_list = result[0]
-                    habitat_closed_list = result[1]
-                
-                    cost_of_edge = cal_cost.cost_of_edge(new_node, habitat_open_list, habitat_closed_list, weights)
+                    self.update_habitat_coverage(new_node, self.habitat_open_list, self.habitat_closed_list)  
+        
+                    cost_of_edge = cal_cost.cost_of_edge(new_node, self.habitat_open_list, self.habitat_closed_list, weights)
                     new_node.cost = new_node.parent.cost + cost_of_edge[0]
   
                     children.append(new_node)
@@ -457,13 +384,13 @@ class astar:
                 if child in closed_list:
                     continue
 
-                result = cal_cost.cost_of_edge(child, habitat_open_list, habitat_closed_list, weights) 
+                result = cal_cost.cost_of_edge(child, self.habitat_open_list, self.habitat_closed_list, weights) 
                 d_2 = result[1]
                 d_3 = result[2]
                 
                 child.g = child.parent.cost - w2 * d_2 - w3 * d_3 
                 child.cost = child.g
-                child.h = - w2 * abs(pathLenLimit - child.pathLen) - w3 * len(habitat_open_list)
+                child.h = - w2 * abs(pathLenLimit - child.pathLen) - w3 * len(self.habitat_open_list)
                 child.f = child.g + child.h 
                 child.pathLen = child.parent.pathLen + euclidean_dist(child.parent.position, child.position)
                 child.time_stamp = int(child.pathLen/self.velocity)

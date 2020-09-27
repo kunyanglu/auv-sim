@@ -12,7 +12,9 @@ from sharkTrajectory import SharkTrajectory
 from live3DGraph import Live3DGraph
 from motion_plan_state import Motion_plan_state
 
-from path_planning.astar_fixLen import astar
+# from path_planning.astar_fixLen import astar
+from path_planning.astarSingleAUV import astar
+
 # from path_planning.rrt_dubins import RRT
 from path_planning.cost import Cost
 from path_planning.catalina import create_cartesian
@@ -120,8 +122,10 @@ class astarSim:
         A_star_traj = final_path_mps[0]
         A_star_traj_cost = final_path_mps[1][0]
 
-        print("\n", "trajectory cost: ", A_star_traj_cost)
-        print("\n", "Trajectory: ", A_star_traj)
+        print ("\n", "trajectory cost: ", A_star_traj_cost)
+        print ("\n", "Trajectory: ", A_star_traj)
+        print ("\n", "Open Habitats: ", astar_solver.habitat_open_list)
+        print ("\n", "Closed Habitats: ", astar_solver.habitat_closed_list)
 
         astar_x_array = []
         astar_y_array = []
