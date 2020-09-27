@@ -46,9 +46,13 @@ class multiAUV:
         """
 
         for i in range(self.numAUV):
+            # create singleAUV object
             single_AUV = singleAUV(self.start, self.obstacle_list, self.boundary_list, self.habitat_open_list, self.sharkGrid, AUV_velocity=1)
             
+            # plan path for one singleAUV object 
             single_planner = single_AUV.astar(pathLenLimit, weights)
+
+            # update overall abitat coverage 
             self.haitat_open_list = single_AUV.habitat_open_list.copy()
             self.habitat_closed_list = single_AUV.habitat_closed_list.copy()
 
