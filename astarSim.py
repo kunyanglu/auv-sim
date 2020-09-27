@@ -105,7 +105,6 @@ class astarSim:
         Parameter:
             NONE 
         """
-
         start = (self.x, self.y)
 
         environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS) # output: ([obstacle_list, boundary_list, boat_list, habitat_list])
