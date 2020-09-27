@@ -12,8 +12,8 @@ from sharkTrajectory import SharkTrajectory
 from live3DGraph import Live3DGraph
 from motion_plan_state import Motion_plan_state
 
-# from path_planning.astar_fixLen import astar
-from path_planning.astarSingleAUV import astar
+# from path_planning.astarSingleAUV import singleAUV
+from path_planning.astarMultiAUV import multiAUV
 
 # from path_planning.rrt_dubins import RRT
 from path_planning.cost import Cost
@@ -100,7 +100,7 @@ class astarSim:
         return trajectory_list
 
 
-    def display_astar_trajectory(self):
+    def display_single_astar_trajectory(self):
         """
         Display the 2d auv trajectory constructed with A* algorithm
 
@@ -112,20 +112,19 @@ class astarSim:
         environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS) # output: ([obstacle_list, boundary_list, boat_list, habitat_list])
         
         obstacle_list = environ[0]
-        boundary_list = environ[1]
-        boat_list = environ[2]
+        boundary_list = environ[1]+environ[2]
         habitat_list = environ[3]
 
-        astar_solver = astar(start, obstacle_list+boat_list, boundary_list, habitat_list)
-        final_path_mps = astar_solver.astar(habitat_list, obstacle_list+boat_list, boundary_list, start, self.pathLenLimit, self.weights)
+        single_AUV = singleAUV(start, obstacle_list, boundary_list, habitat_list, [])
+        final_path_mps = single_AUV.astar(habitat_list, obstacle_list, boundary_list, start, self.pathLenLimit, self.weights)
 
-        A_star_traj = final_path_mps[0]
-        A_star_traj_cost = final_path_mps[1][0]
+        A_star_traj = final_path_mps["path"]
+        A_star_traj_cost = final_path_mps["cost"]
 
         print ("\n", "trajectory cost: ", A_star_traj_cost)
         print ("\n", "Trajectory: ", A_star_traj)
-        print ("\n", "Open Habitats: ", astar_solver.habitat_open_list)
-        print ("\n", "Closed Habitats: ", astar_solver.habitat_closed_list)
+        print ("\n", "Open Habitats: ", single_AUV.habitat_open_list)
+        print ("\n", "Closed Habitats: ", single_AUV.habitat_closed_list)
 
         astar_x_array = []
         astar_y_array = []
@@ -136,11 +135,40 @@ class astarSim:
 
         self.live_graph.plot_2d_astar_traj(astar_x_array, astar_y_array, A_star_traj_cost)
 
-def main():
+    def display_multi_astar_trajectory(self):
+        """
+        Display multiple A* trajectories
 
+        Parameter:
+            None
+        """
+        start = (self.x, self.y)
+
+        environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS) 
+        
+        obstacle_list = environ[0]
+        boundary_list = environ[1]+environ[2]
+        habitat_list = environ[3]    
+
+        AUVS = multiAUV(start, 2, habitat_list, boundary_list, obstacle_list)
+        multi_AUV = AUVS.multi_AUV(self.pathLenLimit, self.weights)
+
+        multi_paths = multi_AUV["trajs"]
+        multi_costs = multi_AUV["costs"]
+        astar_x_array = []
+        astar_y_array = []
+
+        for path in multi_paths:
+            for point in path:
+                astar_x_array.append(round(point.x, 2))
+                astar_y_array.append(round(point.y, 2))
+
+        self.live_graph.plot_multiple_2d_astar_traj(astar_x_array, astar_y_array, multi_costs)
+
+def main():
     pos = create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
-    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=500, weights=[0, 10, 10])
-    test_robot.display_astar_trajectory()
+    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=100, weights=[0, 10, 10])
+    test_robot.display_multi_astar_trajectory()
 
 if __name__ == "__main__":
     main()

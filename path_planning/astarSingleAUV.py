@@ -9,6 +9,7 @@ import catalina
 
 from shapely.wkt import loads as load_wkt 
 from shapely.geometry import Polygon 
+
 from catalina import create_cartesian
 from cost import Cost
 
@@ -40,15 +41,15 @@ class Node:
         self.pathLen = 0 # dynamically changing as a node is appended to the existing length
         self.time_stamp = 0
 
-class astar:
+class singleAUV:
 
-    def __init__(self, start, obstacleList, boundaryList, habitatList):
+    def __init__(self, start, obstacleList, boundaryList, habitatOpenList, habitatClosedList):
         self.path = [] # a list of motion plan state 
         self.start = start
         self.obstacle_list = obstacleList
         self.boundary_list = boundaryList
-        self.habitat_open_list = habitatList
-        self.habitat_closed_list = []
+        self.habitat_open_list = habitatOpenList
+        self.habitat_closed_list = habitatClosedList
         self.visited_nodes = np.zeros([600, 600])
         self.velocity = 1 
         
@@ -219,6 +220,8 @@ class astar:
             if dist <= item.size: # current_node covers a habitat
                 self.habitat_open_list.pop(index)
                 self.habitat_closed_list.append(item)
+        # print ("\n", "SingleAUV Open: ", self.habitat_open_list) 
+        # print ("\n", "SingleAUV Closed: ", self.habitat_closed_list) 
     
     def inside_habitats(self, mps, habitats):
         """
@@ -268,13 +271,13 @@ class astar:
         
         while index < len(trajectory)-1:
 
-            print ("\n", "index: ", index)
+            # print ("\n", "index: ", index)
 
             if self.Walkable(checkPoint, currentPoint, self.obstacle_list): # if no obstacle in between two points
                 
                 inside_habitats = self.inside_habitats(currentPoint, haibitats)
-                print ("\n", "currentPoint inside habitats? ", inside_habitats)
-                print ("\n", "currentPoint: ", (currentPoint.x, currentPoint.y))
+                # print ("\n", "currentPoint inside habitats? ", inside_habitats)
+                # print ("\n", "currentPoint: ", (currentPoint.x, currentPoint.y))
            
                 if not inside_habitats: # if currentPoint is NOT within any of the habitats => removable
                     temp = currentPoint
@@ -282,8 +285,8 @@ class astar:
                     currentPoint = trajectory[index]                    
                     smoothTraj.remove(temp)
                     
-                    print ("\n", "Eliminate: ", (temp.x, temp.y)) 
-                    print ("\n", "Walkable traj: ", smoothTraj)
+                    # print ("\n", "Eliminate: ", (temp.x, temp.y)) 
+                    # print ("\n", "Walkable traj: ", smoothTraj)
                 else: 
                     index += 1
                     currentPoint = trajectory[index]
@@ -292,7 +295,7 @@ class astar:
                 checkPoint = currentPoint
                 index += 1
                 currentPoint = trajectory[index]
-                print ("\n", "currentPoint NOT Walkable: ", (currentPoint.x, currentPoint.y))
+                # print ("\n", "currentPoint NOT Walkable: ", (currentPoint.x, currentPoint.y))
 
         return smoothTraj
 
@@ -320,8 +323,6 @@ class astar:
         closed_list = [] # hold all the exapnded nodes
 
         habitats = habitat_list[:]
-        # habitat_open_list = habitat_list # hold haibitats that have not been explored 
-        # habitat_closed_list = [] # hold habitats that have been explored 
 
         open_list.append(start_node)
 
@@ -356,12 +357,12 @@ class astar:
                 
                 trajectory = path_mps[::-1]
                 
-                print ("\n", "original trajectory: ", trajectory)
-                print ("\n", "original trajectory length: ", len(trajectory))
+                # print ("\n", "original trajectory: ", trajectory)
+                # print ("\n", "original trajectory length: ", len(trajectory))
 
                 smoothPath = self.smoothPath(trajectory, habitats)
 
-                return ([smoothPath, cost])
+                return ({"path" : smoothPath, "cost list" : cost, "cost" : cost[0]})
             
             current_neighbors = self.curr_neighbors(current_node, boundary_list)
 
@@ -394,7 +395,7 @@ class astar:
                 child.f = child.g + child.h 
                 child.pathLen = child.parent.pathLen + euclidean_dist(child.parent.position, child.position)
                 child.time_stamp = int(child.pathLen/self.velocity)
-                print ("\n", "child time stamp: ", child.time_stamp)
+                # print ("\n", "child time stamp: ", child.time_stamp)
 
                 # check if child exists in the open list and have bigger g 
                 for open_node in open_list:
@@ -417,16 +418,15 @@ def main():
     environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS)
     
     obstacle_list = environ[0]
-    boundary_list = environ[1]
-    boat_list = environ[2]
-    habitat_list = environ[3]
+    boundary_list = environ[1]+environ[2]
+    habitat_list = environ[3] 
 
-    astar_solver = astar(start, obstacle_list+boat_list, boundary_list, habitat_list) 
-    final_path_mps = astar_solver.astar(habitat_list, obstacle_list+boat_list, boundary_list, start, 200, weights)
+    single_AUV = singleAUV(start, obstacle_list, boundary_list, habitat_list, []) 
+    final_traj = single_AUV.astar(habitat_list, obstacle_list, boundary_list, start, 200, weights)
 
-    print ("\n", "final trajectory: ",  final_path_mps[0])
-    print ("\n", "Trajectory length: ", len(final_path_mps[0]))
-    print ("\n", "cost of each node on the final trajectory: ",  final_path_mps[1])       
+    print ("\n", "final trajectory: ",  final_traj["path"])
+    print ("\n", "Trajectory length: ", len(final_traj["path"]))
+    print ("\n", "cost of each node on the final trajectory: ",  final_traj["cost"])       
 
 if __name__ == "__main__":
     main()

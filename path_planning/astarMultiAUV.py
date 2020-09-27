@@ -1,40 +1,20 @@
 import random
-import timeit
-import csv 
 import matplotlib.pyplot as plt
 import numpy as np
 import catalina
-
-from astar_singleAUV import singleAUV
+from astarSingleAUV import singleAUV
 from motion_plan_state import Motion_plan_state
-from shapely.wkt import loads as load_wkt 
-from shapely.geometry import Polygon 
-from sharkOccupancyGrid import SharkOccupancyGrid, splitCell
-from matplotlib import cm, patches, collections
-from astar_singleAUV import createSharkGrid
-from cost import Cost
 
 class multiAUV:
-    def __init__(self, start, numAUV, habitatList, boundaryList, obstacleList, sharkGrid):
-        start_position = catalina.create_cartesian(start, catalina.ORIGIN_BOUND)
-        self.start = (round(start_position[0], 2), round(start_position[1], 2))
-        self.habitat_open_list = habitatList.copy()
+    def __init__(self, start, numAUV, habitatList, boundaryList, obstacleList):
+        self.start = start
+        self.habitat_open_list = habitatList[:]
         self.habitat_closed_list = []
         self.boundary_list = boundaryList
         self.obstacle_list = obstacleList
         self.numAUV = numAUV
-
-        coords = []
-        for corner in boundaryList: 
-            coords.append((corner.x, corner.y))
-        # initialize shark occupancy grid
-        self.boundary_poly = Polygon(coords)
-        # divide the workspace into cells
-        self.cell_list = splitCell(self.boundary_poly, 10)  
-        if sharkGrid == {}:
-            self.sharkGrid = createSharkGrid('path_planning/shark_data/AUVGrid_prob_500_straight.csv', self.cell_list)
-        else:
-            self.sharkGrid = sharkGrid
+        self.trajectories = [] # a list holds multiple AUV trajectories
+        self.costs = [] # a list holds multiple cost values of different trajectories
 
     def multi_AUV(self, pathLenLimit, weights):
         """
@@ -47,47 +27,36 @@ class multiAUV:
 
         for i in range(self.numAUV):
             # create singleAUV object
-            single_AUV = singleAUV(self.start, self.obstacle_list, self.boundary_list, self.habitat_open_list, self.sharkGrid, AUV_velocity=1)
-            
+            single_AUV = singleAUV(start, self.obstacle_list, self.boundary_list, self.habitat_open_list, self.habitat_closed_list) 
+        
             # plan path for one singleAUV object 
-            single_planner = single_AUV.astar(pathLenLimit, weights)
+            single_planner = single_AUV.astar(self.habitat_open_list, obstacle_list, boundary_list, start, pathLenLimit, weights)
+            self.trajectories.append(single_planner["path"])
 
             # update overall abitat coverage 
-            self.haitat_open_list = single_AUV.habitat_open_list.copy()
-            self.habitat_closed_list = single_AUV.habitat_closed_list.copy()
+            self.habitat_open_list = single_AUV.habitat_open_list[:]
+            self.habitat_closed_list = single_AUV.habitat_closed_list[:]
 
-            print ("\n", "path ", i+1, ": ", single_planner["path"])
-            print ("\n", "path length ", i+1, ": ", single_planner["path length"])
-            print ("\n", "path cost ", i+1, ": ", single_planner["cost"])
-            print ("\n", "path cost list ", i+1, ": ", single_planner["cost list"])
+            print ("\n", "Open Habitats ", i+1, ": ", self.habitat_open_list)
+            print ("Closed Habitats ", i+1, ": ", self.habitat_closed_list)
+            print ("path ", i+1, ": ", single_planner["path"])
+            print ("path length ", i+1, ": ", len(single_planner["path"]))
+            print ("path cost ", i+1, ": ", single_planner["cost"])
+            
+        return {"trajs" : self.trajectories, "costs" : self.costs}
 
 if __name__ == "__main__":
-    start = (33.446198, -118.486652)
-    numAUV = 3
-    pathLenLimit = 100 
-    weights = [0, 10, 10, 100]
+    numAUV = 2
+    pathLenLimit = 150
+    weights = [0, 10, 10]
+    
+    start_cartesian = catalina.create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
+    start = (round(start_cartesian[0], 2), round(start_cartesian[1], 2))
+
     environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS)
     obstacle_list = environ[0] + environ[2]
     boundary_list = environ[1]
     habitat_list = environ[3]
-    sharkGrid = {}
-    shark_dict = {1: [Motion_plan_state(-120 + (0.3 * i), -60 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
-        2: [Motion_plan_state(-65 - (0.3 * i), -50 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
-        3: [Motion_plan_state(-110 + (0.3 * i), -40 - (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
-        4: [Motion_plan_state(-105 - (0.3 * i), -55 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
-        5: [Motion_plan_state(-120 + (0.3 * i), -50 - (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
-        6: [Motion_plan_state(-85 - (0.3 * i), -55 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
-        7: [Motion_plan_state(-270 + (0.3 * i), 50 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
-        8: [Motion_plan_state(-250 - (0.3 * i), 75 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
-        9: [Motion_plan_state(-260 - (0.3 * i), 75 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
-        10: [Motion_plan_state(-275 + (0.3 * i), 80 - (0.3 * i), traj_time_stamp=i) for i in range(1,201)]}  
-    boundary_poly = []
-    for pos in boundary_list:
-        boundary_poly.append((pos.x, pos.y))
 
-    boundary = Polygon(boundary_poly) # a Polygon object that represents the boundary of our workspace 
-    sharkOccupancyGrid = SharkOccupancyGrid(shark_dict, 10, boundary, 50, 50)
-    grid_dict = sharkOccupancyGrid.convert()
-
-    AUVs = multiAUV(start, numAUV, habitat_list, boundary_list, obstacle_list, sharkGrid)
+    AUVs = multiAUV(start, numAUV, habitat_list, boundary_list, obstacle_list)
     AUVs.multi_AUV(pathLenLimit, weights)
