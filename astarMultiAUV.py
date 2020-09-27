@@ -27,11 +27,12 @@ class multiAUV:
 
         for i in range(self.numAUV):
             # create singleAUV object
-            single_AUV = singleAUV(start, self.obstacle_list, self.boundary_list, self.habitat_open_list, self.habitat_closed_list) 
+            single_AUV = singleAUV(self.start, self.obstacle_list, self.boundary_list, self.habitat_open_list, self.habitat_closed_list) 
         
             # plan path for one singleAUV object 
-            single_planner = single_AUV.astar(self.habitat_open_list, obstacle_list, boundary_list, start, pathLenLimit, weights)
+            single_planner = single_AUV.astar(self.habitat_open_list, self.obstacle_list, self.boundary_list, self.start, pathLenLimit, weights)
             self.trajectories.append(single_planner["path"])
+            self.costs.append(single_planner["cost"])
 
             # update overall abitat coverage 
             self.habitat_open_list = single_AUV.habitat_open_list[:]

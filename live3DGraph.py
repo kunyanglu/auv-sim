@@ -483,9 +483,10 @@ class Live3DGraph:
         ax.grid()
         ax.axis('equal')
 
-        # plot A* trajectory
+        # plot multiple A* trajectories
 
         for index in range(len(x_list)):
+            print ("index: ", index)
             r = random.random()
             g = random.random()
             b = random.random()
