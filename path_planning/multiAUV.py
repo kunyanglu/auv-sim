@@ -46,8 +46,11 @@ class multiAUV:
         """
 
         for i in range(self.numAUV):
-            single_AUV = singleAUV(self.start, self.obstacle_list, self.boundary_list, self.habitat_list, self.sharkGrid, AUV_velocity=1)
+            single_AUV = singleAUV(self.start, self.obstacle_list, self.boundary_list, self.habitat_open_list, self.sharkGrid, AUV_velocity=1)
+            
             single_planner = single_AUV.astar(pathLenLimit, weights)
+            self.haitat_open_list = single_AUV.habitat_open_list.copy()
+            self.habitat_closed_list = single_AUV.habitat_closed_list.copy()
 
             print ("\n", "path ", i+1, ": ", single_planner["path"])
             print ("\n", "path length ", i+1, ": ", single_planner["path length"])

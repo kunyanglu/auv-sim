@@ -274,10 +274,10 @@ class singleAUV:
         for index, item in enumerate(habitat_open_list):
             dist = math.sqrt((current_node.position[0]-item.x) **2 + (current_node.position[1]-item.y) **2)
             if dist <= item.size: 
-                habitat_open_list.pop(index)
-                habitat_closed_list.append(item)
+                self.habitat_open_list.pop(index)
+                self.habitat_closed_list.append(item)
 
-        return (habitat_open_list, habitat_closed_list)
+        return (self.habitat_open_list, self.habitat_closed_list)
     
     def inside_habitats(self, mps, habitats):
         """
@@ -571,10 +571,10 @@ class singleAUV:
                 while current is not None: # backtracking to find the d 
         
                     path.append(current)
-                    # update habitat_open_list 
-                    habitats_open_n_close_list = self.update_habitat_coverage(current_node, self.habitat_open_list, self.habitat_closed_list)
-                    self.habitat_open_list = habitats_open_n_close_list[0]
-                    self.habitat_closed_list = habitats_open_n_close_list[1]
+
+                    # update habitat coverage 
+                    self.update_habitat_coverage(current_node, self.habitat_open_list, self.habitat_closed_list)
+                    print ("num open: ", len(self.habitat_open_list), "num closed: ", len(self.habitat_closed_list))
                     cost.append(current.cost)
                     
                     current = current.parent
@@ -648,20 +648,22 @@ def main():
     boat_list = environ[2]
     habitat_list = environ[3]
 
-   # testing data for shark trajectories
-    shark_dict = {1: [Motion_plan_state(-120 + (0.3 * i), -60 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
-    2: [Motion_plan_state(-65 - (0.3 * i), -50 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
-    3: [Motion_plan_state(-110 + (0.3 * i), -40 - (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
-    4: [Motion_plan_state(-105 - (0.3 * i), -55 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
-    5: [Motion_plan_state(-120 + (0.3 * i), -50 - (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
-    6: [Motion_plan_state(-85 - (0.3 * i), -55 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
-    7: [Motion_plan_state(-270 + (0.3 * i), 50 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
-    8: [Motion_plan_state(-250 - (0.3 * i), 75 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
-    9: [Motion_plan_state(-260 - (0.3 * i), 75 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
-    10: [Motion_plan_state(-275 + (0.3 * i), 80 - (0.3 * i), traj_time_stamp=i) for i in range(1,201)]} 
+#    # testing data for shark trajectories
+#     shark_dict = {1: [Motion_plan_state(-120 + (0.3 * i), -60 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
+#     2: [Motion_plan_state(-65 - (0.3 * i), -50 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
+#     3: [Motion_plan_state(-110 + (0.3 * i), -40 - (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
+#     4: [Motion_plan_state(-105 - (0.3 * i), -55 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
+#     5: [Motion_plan_state(-120 + (0.3 * i), -50 - (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
+#     6: [Motion_plan_state(-85 - (0.3 * i), -55 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
+#     7: [Motion_plan_state(-270 + (0.3 * i), 50 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
+#     8: [Motion_plan_state(-250 - (0.3 * i), 75 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)],
+#     9: [Motion_plan_state(-260 - (0.3 * i), 75 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)], 
+#     10: [Motion_plan_state(-275 + (0.3 * i), 80 - (0.3 * i), traj_time_stamp=i) for i in range(1,201)]} 
+
+    shark_dict = {1: [Motion_plan_state(-120 + (0.3 * i), -60 + (0.3 * i), traj_time_stamp=i) for i in range(1,201)]}
 
     astar_solver = singleAUV(start, habitat_list, obstacle_list+boat_list, boundary_list, {}, AUV_velocity=1) 
-    final_path_mps = astar_solver.astar(50, weights)
+    final_path_mps = astar_solver.astar(200, weights)
 
     print ("\n", "Open Habitats: ", astar_solver.habitat_open_list)
     print ("\n", "Closed Habitats: ", astar_solver.habitat_closed_list)
