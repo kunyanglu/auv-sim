@@ -1,13 +1,13 @@
 import random
 import matplotlib.pyplot as plt
 import numpy as np
-import catalina
+import path_planning.catalina as catalina
 from astarSingleAUV import singleAUV 
 from motion_plan_state import Motion_plan_state
 
 class multiAUV:
-    def __init__(self, start, numAUV, habitatList, boundaryList, obstacleList):
-        self.start = start
+    def __init__(self, numAUV, habitatList, boundaryList, obstacleList):
+        # self.start = start
         self.habitat_open_list = habitatList[:]
         self.habitat_closed_list = []
         self.boundary_list = boundaryList
@@ -26,11 +26,13 @@ class multiAUV:
         """
 
         for i in range(self.numAUV):
-            # create singleAUV object
-            single_AUV = singleAUV(self.start, self.obstacle_list, self.boundary_list, self.habitat_open_list, self.habitat_closed_list) 
+            # create singleAUV object 
+            random_start_position = (random.randint(-400, 0), random.randint(-100, 100))
+            print ("\n", "staring position ", i, ": ", random_start_position)
+            single_AUV = singleAUV(random_start_position, self.obstacle_list, self.boundary_list, self.habitat_open_list, self.habitat_closed_list) 
         
             # plan path for one singleAUV object 
-            single_planner = single_AUV.astar(self.habitat_open_list, self.obstacle_list, self.boundary_list, self.start, pathLenLimit, weights)
+            single_planner = single_AUV.astar(self.habitat_open_list, self.obstacle_list, self.boundary_list, random_start_position, pathLenLimit, weights)
             self.trajectories.append(single_planner["path"])
             self.costs.append(single_planner["cost"])
 
@@ -39,16 +41,18 @@ class multiAUV:
             self.habitat_closed_list = single_AUV.habitat_closed_list[:]
 
             print ("\n", "Open Habitats ", i+1, ": ", self.habitat_open_list)
-            print ("Closed Habitats ", i+1, ": ", self.habitat_closed_list)
-            print ("path ", i+1, ": ", single_planner["path"])
-            print ("path length ", i+1, ": ", len(single_planner["path"]))
-            print ("path cost ", i+1, ": ", single_planner["cost"])
+            print ("\n", "Closed Habitats ", i+1, ": ", self.habitat_closed_list)
+            print ("\n", "path ", i+1, ": ", single_planner["path"])
+            print ("\n", "path length ", i+1, ": ", len(single_planner["path"]))
+            print ("\n", "path cost ", i+1, ": ", single_planner["cost"])
+
+            del single_AUV
             
         return {"trajs" : self.trajectories, "costs" : self.costs}
 
 if __name__ == "__main__":
     numAUV = 2
-    pathLenLimit = 150
+    pathLenLimit = 200
     weights = [0, 10, 10]
     
     start_cartesian = catalina.create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)

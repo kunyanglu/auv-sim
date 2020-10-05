@@ -142,7 +142,7 @@ class astarSim:
         Parameter:
             None
         """
-        start = (self.x, self.y)
+        # start = (self.x, self.y)
 
         environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS) 
         
@@ -150,7 +150,7 @@ class astarSim:
         boundary_list = environ[1]+environ[2]
         habitat_list = environ[3]    
 
-        AUVS = multiAUV(start, 2, habitat_list, boundary_list, obstacle_list)
+        AUVS = multiAUV(2, habitat_list, boundary_list, obstacle_list)
         multi_AUV = AUVS.multi_AUV_planner(self.pathLenLimit, self.weights)
 
         multi_paths = multi_AUV["trajs"]
@@ -172,7 +172,7 @@ class astarSim:
 
 def main():
     pos = create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
-    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=1000, weights=[0, 10, 10])
+    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=800, weights=[0, 10, 10])
     test_robot.display_multi_astar_trajectory()
     # test_robot.display_single_astar_trajectory()
 

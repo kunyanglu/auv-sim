@@ -10,7 +10,7 @@ import constants as const
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
-import catalina
+import path_planning.catalina as catalina
 import random
 
 """
