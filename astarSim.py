@@ -150,12 +150,12 @@ class astarSim:
         boundary_list = environ[1]+environ[2]
         habitat_list = environ[3]    
 
-        AUVS = multiAUV(2, habitat_list, boundary_list, obstacle_list)
+        AUVS = multiAUV(3, habitat_list, boundary_list, obstacle_list)
         multi_AUV = AUVS.multi_AUV_planner(self.pathLenLimit, self.weights)
 
         multi_paths = multi_AUV["trajs"]
         multi_costs = multi_AUV["costs"]
-        print ("\n", "multi_costs length: ", len(multi_costs))
+        # print ("\n", "multi_costs length: ", len(multi_costs))
 
         X_list = [] # list that holds numAUV-lists of X positions of the trajectory
         Y_list = [] # list that holds numAUV-lists of Y positions of the trajectory
@@ -167,12 +167,12 @@ class astarSim:
                 astar_y_array.append(round(point.y, 2))
             X_list.append(astar_x_array)
             Y_list.append(astar_y_array)
-        print ("\n", "X_list length: ", len(X_list))
+        # print ("\n", "X_list length: ", len(X_list))
         self.live_graph.plot_multiple_2d_astar_traj(X_list, Y_list, multi_costs)
 
 def main():
     pos = create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
-    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=800, weights=[0, 10, 10])
+    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=200, weights=[0, 10, 100])
     test_robot.display_multi_astar_trajectory()
     # test_robot.display_single_astar_trajectory()
 

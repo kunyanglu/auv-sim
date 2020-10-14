@@ -48,8 +48,8 @@ class singleAUV:
         self.start = start
         self.obstacle_list = obstacleList
         self.boundary_list = boundaryList
-        self.habitat_open_list = habitatOpenList
-        self.habitat_closed_list = habitatClosedList
+        self.habitat_open_list = habitatOpenList[:]
+        self.habitat_closed_list = habitatClosedList[:]
         self.visited_nodes = np.zeros([600, 600])
         self.velocity = 1 
         
@@ -218,10 +218,10 @@ class singleAUV:
         for index, item in enumerate(habitat_open_list):
             dist = math.sqrt((current_node.position[0]-item.x) **2 + (current_node.position[1]-item.y) **2)
             if dist <= item.size: # current_node covers a habitat
+                print ("HABITATS UPDATED")
                 self.habitat_open_list.pop(index)
                 self.habitat_closed_list.append(item)
-        # print ("\n", "SingleAUV Open: ", self.habitat_open_list) 
-        # print ("\n", "SingleAUV Closed: ", self.habitat_closed_list) 
+
     
     def inside_habitats(self, mps, habitats):
         """
@@ -299,7 +299,7 @@ class singleAUV:
 
         return smoothTraj
 
-    def astar(self, habitat_list, obs_lst, boundary_list, start, pathLenLimit, weights): 
+    def astar(self, start, pathLenLimit, weights): 
         """
         Find the optimal path from start to goal avoiding given obstacles 
         Parameter: 
@@ -322,8 +322,6 @@ class singleAUV:
         open_list = [] # hold neighbors of the expanded nodes
         closed_list = [] # hold all the exapnded nodes
 
-        habitats = habitat_list[:]
-
         open_list.append(start_node)
 
         while len(open_list) > 0:
@@ -335,6 +333,10 @@ class singleAUV:
                     current_node = item
                     current_index = index
             
+            self.update_habitat_coverage(current_node, self.habitat_open_list, self.habitat_closed_list)  
+            # print ("NUM OPEN: ", len(self.habitat_open_list))
+            # print ("NUM CLOSED: ", len(self.habitat_closed_list))
+
             open_list.pop(current_index)
             closed_list.append(current_node)
    
@@ -361,19 +363,18 @@ class singleAUV:
 
                 return ({"path" : trajectory, "cost list" : cost, "cost" : cost[0]})
             
-            current_neighbors = self.curr_neighbors(current_node, boundary_list)
+            current_neighbors = self.curr_neighbors(current_node, self.boundary_list)
 
             children = []
 
             for neighbor in current_neighbors: # create new node if the neighbor is collision-free
 
-                if self.collision_free(neighbor, obs_lst):
+                if self.collision_free(neighbor, self.obstacle_list):
 
                     new_node = Node(current_node, neighbor)
-                    self.update_habitat_coverage(new_node, self.habitat_open_list, self.habitat_closed_list)  
-        
-                    cost_of_edge = cal_cost.cost_of_edge(new_node, self.habitat_open_list, self.habitat_closed_list, weights)
-                    new_node.cost = new_node.parent.cost + cost_of_edge[0]
+                    # cost_of_edge = cal_cost.cost_of_edge(new_node, self.habitat_open_list, self.habitat_closed_list, weights)
+                    # self.update_habitat_coverage(new_node, self.habitat_open_list, self.habitat_closed_list)  
+                    # new_node.cost = new_node.parent.cost + cost_of_edge[0]
   
                     children.append(new_node)
 
@@ -384,9 +385,9 @@ class singleAUV:
 
                 habitatInfo = cal_cost.cost_of_edge(child, self.habitat_open_list, self.habitat_closed_list, weights) 
                 insideAnyHabitats = habitatInfo[1]
-                insideClosedHabitats = habitatInfo[2]
+                insideOpenHabitats = habitatInfo[2]
                 
-                child.g = child.parent.cost - w2 * insideAnyHabitats - w3 * insideClosedHabitats 
+                child.g = child.parent.cost - w2 * insideAnyHabitats - w3 * insideOpenHabitats 
                 child.cost = child.g
                 child.h = - w2 * abs(pathLenLimit - child.pathLen) - w3 * len(self.habitat_open_list)
                 child.f = child.g + child.h 
@@ -405,7 +406,7 @@ class singleAUV:
                     self.visited_nodes[x_pos, y_pos] = 1
 
 def main():
-    weights = [0, 10, 10]
+    weights = [0, 10, 1000]
     start_cartesian = create_cartesian((33.445089, -118.486933), catalina.ORIGIN_BOUND)
     start = (round(start_cartesian[0], 2), round(start_cartesian[1], 2))
     print ("start: ", start) 
@@ -418,7 +419,7 @@ def main():
     habitat_list = environ[3] 
 
     single_AUV = singleAUV(start, obstacle_list, boundary_list, habitat_list, []) 
-    final_traj = single_AUV.astar(habitat_list, obstacle_list, boundary_list, start, 200, weights)
+    final_traj = single_AUV.astar(start, 800, weights)
 
     print ("\n", "final trajectory: ",  final_traj["path"])
     print ("\n", "Trajectory length: ", len(final_traj["path"]))

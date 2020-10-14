@@ -8,8 +8,8 @@ from motion_plan_state import Motion_plan_state
 class multiAUV:
     def __init__(self, numAUV, habitatList, boundaryList, obstacleList):
         # self.start = start
-        self.habitat_open_list = habitatList[:]
-        self.habitat_closed_list = []
+        self.multiAUV_habitat_open_list = habitatList[:]
+        self.multiAUV_habitat_closed_list = []
         self.boundary_list = boundaryList
         self.obstacle_list = obstacleList
         self.numAUV = numAUV
@@ -28,23 +28,24 @@ class multiAUV:
         for i in range(self.numAUV):
             # create singleAUV object 
             random_start_position = (random.randint(-400, 0), random.randint(-100, 100))
-            print ("\n", "staring position ", i, ": ", random_start_position)
-            single_AUV = singleAUV(random_start_position, self.obstacle_list, self.boundary_list, self.habitat_open_list, self.habitat_closed_list) 
+            print ("\n", "STARTING AT ", i+1, ": ", random_start_position)
+            single_AUV = singleAUV(random_start_position, self.obstacle_list, self.boundary_list, self.multiAUV_habitat_open_list, self.multiAUV_habitat_closed_list) 
         
             # plan path for one singleAUV object 
-            single_planner = single_AUV.astar(self.habitat_open_list, self.obstacle_list, self.boundary_list, random_start_position, pathLenLimit, weights)
+            single_planner = single_AUV.astar(random_start_position, pathLenLimit, weights)
             self.trajectories.append(single_planner["path"])
             self.costs.append(single_planner["cost"])
 
-            # update overall abitat coverage 
-            self.habitat_open_list = single_AUV.habitat_open_list[:]
-            self.habitat_closed_list = single_AUV.habitat_closed_list[:]
+            # update overall habitat coverage 
+            self.multiAUV_habitat_open_list = single_AUV.habitat_open_list[:]
+            self.multiAUV_habitat_closed_list = single_AUV.habitat_closed_list[:]
+            
+            # print ("\n", "MultiAUV Open Habitats ", i+1, ": ", self.multiAUV_habitat_open_list)
+            # print ("\n", "MultiAUV Closed Habitats ", i+1, ": ", self.multiAUV_habitat_closed_list)
 
-            print ("\n", "Open Habitats ", i+1, ": ", self.habitat_open_list)
-            print ("\n", "Closed Habitats ", i+1, ": ", self.habitat_closed_list)
-            print ("\n", "path ", i+1, ": ", single_planner["path"])
-            print ("\n", "path length ", i+1, ": ", len(single_planner["path"]))
-            print ("\n", "path cost ", i+1, ": ", single_planner["cost"])
+            # print ("\n", "path ", i+1, ": ", single_planner["path"])
+            # print ("\n", "path length ", i+1, ": ", len(single_planner["path"]))
+            # print ("\n", "path cost ", i+1, ": ", single_planner["cost"])
 
             del single_AUV
             
@@ -63,5 +64,5 @@ if __name__ == "__main__":
     boundary_list = environ[1]
     habitat_list = environ[3]
 
-    AUVs = multiAUV(start, numAUV, habitat_list, boundary_list, obstacle_list)
+    AUVs = multiAUV(numAUV, habitat_list, boundary_list, obstacle_list)
     AUVs.multi_AUV_planner(pathLenLimit, weights)

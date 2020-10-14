@@ -85,19 +85,21 @@ class Cost:
         d_2 = 0 
         d_3 = 0 
 
-        # set d_2 
+        # check if inside any of the habitats explored or unexplored
         for habi in habitat_open_list+habitat_closed_list:
             dist = math.sqrt((new_node.position[0]-habi.x) **2 + (new_node.position[1]-habi.y) **2)
             if dist <= habi.size:
                 d_2 = 1
-                
-        # set d_3
-        for habi in habitat_closed_list:
+    
+        # check if inside the unexplored habitats
+        for habi in habitat_open_list:
             dist = math.sqrt((new_node.position[0]-habi.x) **2 + (new_node.position[1]-habi.y) **2)
+            # print ("dist: ", dist, "habi size: ", habi.size)
             if dist <= habi.size:
                 d_3 = 1
         
         cost_of_edge = - w2 * d_2 - w3 * d_3
+        # print ("INSIDE OPEN HABITAT? ", d_3)
 
         return ([cost_of_edge, d_2, d_3])
 

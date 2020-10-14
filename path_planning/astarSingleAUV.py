@@ -5,7 +5,7 @@ import timeit
 from motion_plan_state import Motion_plan_state
 import matplotlib.pyplot as plt
 import numpy as np
-import catalina
+import catalina as catalina
 
 from shapely.wkt import loads as load_wkt 
 from shapely.geometry import Polygon 
@@ -322,7 +322,7 @@ class singleAUV:
         open_list = [] # hold neighbors of the expanded nodes
         closed_list = [] # hold all the exapnded nodes
 
-        habitats = habitat_list[:]
+        # habitats = habitat_list[:]
 
         open_list.append(start_node)
 
@@ -356,13 +356,10 @@ class singleAUV:
                     path_mps.append(mps)
                 
                 trajectory = path_mps[::-1]
-                
-                # print ("\n", "original trajectory: ", trajectory)
-                # print ("\n", "original trajectory length: ", len(trajectory))
 
-                smoothPath = self.smoothPath(trajectory, habitats)
+                # smoothPath = self.smoothPath(trajectory, habitats)
 
-                return ({"path" : smoothPath, "cost list" : cost, "cost" : cost[0]})
+                return ({"path" : trajectory, "cost list" : cost, "cost" : cost[0]})
             
             current_neighbors = self.curr_neighbors(current_node, boundary_list)
 
@@ -385,17 +382,16 @@ class singleAUV:
                 if child in closed_list:
                     continue
 
-                result = cal_cost.cost_of_edge(child, self.habitat_open_list, self.habitat_closed_list, weights) 
-                d_2 = result[1]
-                d_3 = result[2]
+                habitatInfo = cal_cost.cost_of_edge(child, self.habitat_open_list, self.habitat_closed_list, weights) 
+                insideAnyHabitats = habitatInfo[1]
+                insideOpenHabitats = habitatInfo[2]
                 
-                child.g = child.parent.cost - w2 * d_2 - w3 * d_3 
+                child.g = child.parent.cost - w2 * insideAnyHabitats - w3 * insideOpenHabitats 
                 child.cost = child.g
                 child.h = - w2 * abs(pathLenLimit - child.pathLen) - w3 * len(self.habitat_open_list)
                 child.f = child.g + child.h 
                 child.pathLen = child.parent.pathLen + euclidean_dist(child.parent.position, child.position)
                 child.time_stamp = int(child.pathLen/self.velocity)
-                # print ("\n", "child time stamp: ", child.time_stamp)
 
                 # check if child exists in the open list and have bigger g 
                 for open_node in open_list:
@@ -409,7 +405,7 @@ class singleAUV:
                     self.visited_nodes[x_pos, y_pos] = 1
 
 def main():
-    weights = [0, 10, 10]
+    weights = [0, 10, 50]
     start_cartesian = create_cartesian((33.445089, -118.486933), catalina.ORIGIN_BOUND)
     start = (round(start_cartesian[0], 2), round(start_cartesian[1], 2))
     print ("start: ", start) 
