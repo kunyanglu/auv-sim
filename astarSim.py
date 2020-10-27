@@ -143,15 +143,20 @@ class astarSim:
             None
         """
         # start = (self.x, self.y)
+        starting_position_list = [(-50, 0), (-200, 0)]
 
         environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS) 
         
         obstacle_list = environ[0]
-        boundary_list = environ[1]+environ[2]
-        habitat_list = environ[3]    
+        boundary_list = environ[1] + environ[2]
+        habitat_list = environ[3] 
 
-        AUVS = multiAUV(3, habitat_list, boundary_list, obstacle_list)
-        multi_AUV = AUVS.multi_AUV_planner(self.pathLenLimit, self.weights)
+        AUVS = multiAUV(2, habitat_list, boundary_list, obstacle_list)
+        # Call multi_AUV with randomized starting positions 
+        # multi_AUV = AUVS.multi_AUV_planner(self.pathLenLimit, self.weights)
+        
+        # Call multi_AUV with fixed starting positions 
+        multi_AUV = AUVS.multi_AUV_planner_fixed_start(self.pathLenLimit, self.weights, starting_position_list)
 
         multi_paths = multi_AUV["trajs"]
         multi_costs = multi_AUV["costs"]
@@ -159,6 +164,7 @@ class astarSim:
 
         X_list = [] # list that holds numAUV-lists of X positions of the trajectory
         Y_list = [] # list that holds numAUV-lists of Y positions of the trajectory
+
         for path in multi_paths:
             astar_x_array = []
             astar_y_array = []
@@ -172,7 +178,7 @@ class astarSim:
 
 def main():
     pos = create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
-    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=200, weights=[0, 10, 100])
+    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=600, weights=[0, 10, 1000])
     test_robot.display_multi_astar_trajectory()
     # test_robot.display_single_astar_trajectory()
 

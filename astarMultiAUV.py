@@ -4,6 +4,7 @@ import numpy as np
 import path_planning.catalina as catalina
 from astarSingleAUV import singleAUV 
 from motion_plan_state import Motion_plan_state
+from itertools import permutations
 
 class multiAUV:
     def __init__(self, numAUV, habitatList, boundaryList, obstacleList):
@@ -15,10 +16,49 @@ class multiAUV:
         self.numAUV = numAUV
         self.trajectories = [] # a list holds multiple AUV trajectories
         self.costs = [] # a list holds multiple cost values of different trajectories
+    
+    def multi_AUV_planner_fixed_start(self, pathLenLimit, weights, start_position_list):
+        """
+        Find the optimal path for each AUV with fixed start positions  
+        Parameter: 
+            pathLenLimit: in meters; the length limit of the A* trajectory 
+            weights: a list of three numbers [w1, w2, w3] 
+            shark_traj_list: a list of shark trajectories that are lists of Motion_plan_state objects 
+        """        
+        # Create environment
+        environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS)
+        habitat_list = environ[3]
+
+        start_pos_permu_list = permutations(start_position_list)
+
+        for AUV_travel_order_list in start_pos_permu_list:
+        
+        # Reset the habitat coverage 
+        # All habitats are open
+            self.multiAUV_habitat_open_list = habitat_list[:]
+            self.multiAUV_habitat_closed_list = []
+            print ("\n", "Habitat Open: ", len(self.multiAUV_habitat_open_list))
+            
+            for start in AUV_travel_order_list:
+                print ("\n", "STARTING AT: ", start)
+                single_AUV = singleAUV(start, self.obstacle_list, self.boundary_list, self.multiAUV_habitat_open_list, self.multiAUV_habitat_closed_list) 
+
+                # plan path for one singleAUV object 
+                single_planner = single_AUV.astar(start, pathLenLimit, weights)
+                self.trajectories.append(single_planner["path"])
+                print("\n", "Traj: ", single_planner["path"])
+                self.costs.append(single_planner["cost"])
+
+                # update overall habitat coverage 
+                self.multiAUV_habitat_open_list = single_AUV.habitat_open_list[:]
+                self.multiAUV_habitat_closed_list = single_AUV.habitat_closed_list[:]
+                print ("\n", "Habitat Open: ", len(self.multiAUV_habitat_open_list))
+            
+        return {"trajs" : self.trajectories, "costs" : self.costs}        
 
     def multi_AUV_planner(self, pathLenLimit, weights):
         """
-        Find the optimal path for each AUV  
+        Find the optimal path for each AUV with randomized start positions 
         Parameter: 
             pathLenLimit: in meters; the length limit of the A* trajectory 
             weights: a list of three numbers [w1, w2, w3] 
@@ -26,11 +66,11 @@ class multiAUV:
         """
 
         for i in range(self.numAUV):
-            # create singleAUV object 
+            # Radomize the starting position 
             random_start_position = (random.randint(-400, 0), random.randint(-100, 100))
             print ("\n", "STARTING AT ", i+1, ": ", random_start_position)
             single_AUV = singleAUV(random_start_position, self.obstacle_list, self.boundary_list, self.multiAUV_habitat_open_list, self.multiAUV_habitat_closed_list) 
-        
+
             # plan path for one singleAUV object 
             single_planner = single_AUV.astar(random_start_position, pathLenLimit, weights)
             self.trajectories.append(single_planner["path"])
@@ -51,18 +91,18 @@ class multiAUV:
             
         return {"trajs" : self.trajectories, "costs" : self.costs}
 
-if __name__ == "__main__":
-    numAUV = 2
-    pathLenLimit = 200
-    weights = [0, 10, 10]
+# if __name__ == "__main__":
+#     numAUV = 2
+#     pathLenLimit = 200
+#     weights = [0, 10, 10]
     
-    start_cartesian = catalina.create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
-    start = (round(start_cartesian[0], 2), round(start_cartesian[1], 2))
+#     start_cartesian = catalina.create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
+#     start = (round(start_cartesian[0], 2), round(start_cartesian[1], 2))
 
-    environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS)
-    obstacle_list = environ[0] + environ[2]
-    boundary_list = environ[1]
-    habitat_list = environ[3]
+#     environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS)
+#     obstacle_list = environ[0] + environ[2]
+#     boundary_list = environ[1]
+#     habitat_list = environ[3]
 
-    AUVs = multiAUV(numAUV, habitat_list, boundary_list, obstacle_list)
-    AUVs.multi_AUV_planner(pathLenLimit, weights)
+#     AUVs = multiAUV(numAUV, habitat_list, boundary_list, obstacle_list)
+#     AUVs.multi_AUV_planner(pathLenLimit, weights)
