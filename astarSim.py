@@ -10,6 +10,7 @@ import timeit
 from sharkState import SharkState
 from sharkTrajectory import SharkTrajectory
 from live3DGraph import Live3DGraph
+from itertools import permutations
 from motion_plan_state import Motion_plan_state
 
 from astarSingleAUV import singleAUV 
@@ -17,13 +18,13 @@ from astarMultiAUV import multiAUV
 
 # from path_planning.rrt_dubins import RRT
 from path_planning.cost import Cost
-from path_planning.catalina import create_cartesian
+from catalina import create_cartesian
 
 # keep all the constants in the constants.py file
 # to get access to a constant, eg:
 #   const.SIM_TIME_INTERVAL
 import constants as const
-import path_planning.catalina as catalina
+import catalina
 
 def angle_wrap(ang):
     """
@@ -143,7 +144,7 @@ class astarSim:
             None
         """
         # start = (self.x, self.y)
-        starting_position_list = [(-50, 0), (-200, 0)]
+        starting_position_list = [(-200, 0), (-200, 0)]
 
         environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS) 
         
@@ -178,7 +179,7 @@ class astarSim:
 
 def main():
     pos = create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
-    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=600, weights=[0, 10, 1000])
+    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=200, weights=[0, 10, 1000])
     test_robot.display_multi_astar_trajectory()
     # test_robot.display_single_astar_trajectory()
 

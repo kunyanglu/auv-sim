@@ -10,7 +10,7 @@ import constants as const
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
-import path_planning.catalina as catalina
+import catalina
 import random
 
 """
@@ -486,7 +486,7 @@ class Live3DGraph:
         # plot multiple A* trajectories
 
         for index in range(len(x_list)):
-            print ("index: ", index)
+            # print ("index: ", index)
             r = random.random()
             g = random.random()
             b = random.random()
@@ -494,7 +494,7 @@ class Live3DGraph:
 
             cost = traj_cost_list[index]
 
-            plt.plot(x_list[index], y_list[index], marker = ',', color = color, label=cost)
+            plt.plot(x_list[index], y_list[index], marker = ',', color = color, label=cost) 
             legend = plt.legend()
             plt.setp(legend.get_texts(), color='#000000') 
 

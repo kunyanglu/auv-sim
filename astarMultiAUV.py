@@ -1,7 +1,7 @@
 import random
 import matplotlib.pyplot as plt
 import numpy as np
-import path_planning.catalina as catalina
+import catalina
 from astarSingleAUV import singleAUV 
 from motion_plan_state import Motion_plan_state
 from itertools import permutations
@@ -33,8 +33,8 @@ class multiAUV:
 
         for AUV_travel_order_list in start_pos_permu_list:
         
-        # Reset the habitat coverage 
-        # All habitats are open
+            # Reset the habitat coverage 
+            # All habitats are open
             self.multiAUV_habitat_open_list = habitat_list[:]
             self.multiAUV_habitat_closed_list = []
             print ("\n", "Habitat Open: ", len(self.multiAUV_habitat_open_list))
@@ -46,13 +46,15 @@ class multiAUV:
                 # plan path for one singleAUV object 
                 single_planner = single_AUV.astar(start, pathLenLimit, weights)
                 self.trajectories.append(single_planner["path"])
-                print("\n", "Traj: ", single_planner["path"])
+                # print("\n", "Traj: ", single_planner["path"])
                 self.costs.append(single_planner["cost"])
 
                 # update overall habitat coverage 
                 self.multiAUV_habitat_open_list = single_AUV.habitat_open_list[:]
                 self.multiAUV_habitat_closed_list = single_AUV.habitat_closed_list[:]
                 print ("\n", "Habitat Open: ", len(self.multiAUV_habitat_open_list))
+
+                break
             
         return {"trajs" : self.trajectories, "costs" : self.costs}        
 

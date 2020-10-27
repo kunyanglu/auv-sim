@@ -5,7 +5,7 @@ import timeit
 from motion_plan_state import Motion_plan_state
 import matplotlib.pyplot as plt
 import numpy as np
-import path_planning.catalina as catalina
+import catalina
 
 from shapely.wkt import loads as load_wkt 
 from shapely.geometry import Polygon 
