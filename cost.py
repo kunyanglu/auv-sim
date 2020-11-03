@@ -85,8 +85,14 @@ class Cost:
         d_2 = 0 
         d_3 = 0 
 
-        # check if inside any of the habitats explored or unexplored
-        for habi in habitat_open_list+habitat_closed_list:
+        # # check if inside any of the habitats explored or unexplored
+        # for habi in habitat_open_list+habitat_closed_list:
+        #     dist = math.sqrt((new_node.position[0]-habi.x) **2 + (new_node.position[1]-habi.y) **2)
+        #     if dist <= habi.size:
+        #         d_2 = 1
+
+        # check if inside any of explored habitats
+        for habi in habitat_closed_list:
             dist = math.sqrt((new_node.position[0]-habi.x) **2 + (new_node.position[1]-habi.y) **2)
             if dist <= habi.size:
                 d_2 = 1

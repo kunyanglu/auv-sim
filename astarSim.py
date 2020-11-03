@@ -144,7 +144,7 @@ class astarSim:
             None
         """
         # start = (self.x, self.y)
-        starting_position_list = [(-200, 0), (-200, 0)]
+        starting_position_list = [(-80, -110), (0, 0)]
 
         environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS) 
         
@@ -179,7 +179,7 @@ class astarSim:
 
 def main():
     pos = create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
-    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=200, weights=[0, 10, 1000])
+    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=250, weights=[0, 10, 1000])
     test_robot.display_multi_astar_trajectory()
     # test_robot.display_single_astar_trajectory()
 

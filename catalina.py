@@ -84,10 +84,11 @@ OBSTACLES = [Motion_plan_state(33.445113, -118.484508, size=4.479407446738455),
             Motion_plan_state(33.444862, -118.483741, size=17.812248298199293),
             Motion_plan_state(33.444779, -118.483577, size=26.601714064649762)]
 
-BOATS = [Motion_plan_state(33.445425, -118.486314, size=5),
-        Motion_plan_state(33.444596, -118.485285, size=5),
-        Motion_plan_state(33.444412, -118.485508, size=5),
-        Motion_plan_state(33.443940, -118.485384, size=5)]  
+# BOATS = [Motion_plan_state(33.445425, -118.486314, size=5),
+#         Motion_plan_state(33.444596, -118.485285, size=5),
+#         Motion_plan_state(33.444412, -118.485508, size=5),
+#         Motion_plan_state(33.443940, -118.485384, size=5)]  
+BOATS = []
 
 HABITATS = [Motion_plan_state(33.444480, -118.486094, size=5),
     Motion_plan_state(33.446198, -118.486652, size=5),
@@ -96,7 +97,12 @@ HABITATS = [Motion_plan_state(33.444480, -118.486094, size=5),
     Motion_plan_state(33.444883, -118.487070, size=5),
     Motion_plan_state(33.445500, -118.488433, size=5),
     Motion_plan_state(33.445688, -118.487446, size=5),
-    Motion_plan_state(33.446548, -118.488486, size=5)]
+    Motion_plan_state(33.446548, -118.488486, size=5),
+    Motion_plan_state(33.445425, -118.486314, size=5),
+    Motion_plan_state(33.444596, -118.485285, size=5),
+    Motion_plan_state(33.444412, -118.485508, size=5),
+    Motion_plan_state(33.443940, -118.485384, size=5),
+    Motion_plan_state(33.444773, -118.486274, size=5)]
 
 GOAL_LIST = [(33.444928, -118.484448), (33.444686, -118.484716), 
 (33.444328, -118.485606), (33.444811, -118.486454), 

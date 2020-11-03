@@ -37,7 +37,7 @@ class multiAUV:
             # All habitats are open
             self.multiAUV_habitat_open_list = habitat_list[:]
             self.multiAUV_habitat_closed_list = []
-            print ("\n", "Habitat Open: ", len(self.multiAUV_habitat_open_list))
+            # print ("\n", "Habitat Open: ", len(self.multiAUV_habitat_open_list))
             
             for start in AUV_travel_order_list:
                 print ("\n", "STARTING AT: ", start)
@@ -52,9 +52,9 @@ class multiAUV:
                 # update overall habitat coverage 
                 self.multiAUV_habitat_open_list = single_AUV.habitat_open_list[:]
                 self.multiAUV_habitat_closed_list = single_AUV.habitat_closed_list[:]
-                print ("\n", "Habitat Open: ", len(self.multiAUV_habitat_open_list))
+                # print ("\n", "Habitat Open: ", len(self.multiAUV_habitat_open_list))
 
-                break
+                # break
             
         return {"trajs" : self.trajectories, "costs" : self.costs}        
 
