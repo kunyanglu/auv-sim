@@ -5,6 +5,8 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import geopy.distance 
 from motion_plan_state import Motion_plan_state
+from shapely.wkt import loads as load_wkt 
+from shapely.geometry import Polygon 
 
 def create_cartesian(pos, origin): 
     """

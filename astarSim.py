@@ -5,6 +5,7 @@ import numpy as np
 import csv
 import time
 import timeit
+import random
 
 # import 3 data representation class
 from sharkState import SharkState
@@ -19,6 +20,10 @@ from astarMultiAUV import multiAUV
 # from path_planning.rrt_dubins import RRT
 from path_planning.cost import Cost
 from catalina import create_cartesian
+
+from shapely.wkt import loads as load_wkt 
+from shapely.geometry import Polygon
+from operator import add
 
 # keep all the constants in the constants.py file
 # to get access to a constant, eg:
@@ -136,32 +141,105 @@ class astarSim:
 
         self.live_graph.plot_2d_astar_traj(astar_x_array, astar_y_array, A_star_traj_cost)
 
-    def display_multi_astar_trajectory(self):
+    def collision_free(self, start_pos, obstacle_list):
+        """
+        Return true if start_pos does not collide with any obstacle
+        otherwise return false
+        """
+
+        for obstacle in obstacle_list:
+            dx = abs(start_pos[0] - obstacle.x)
+            dy = abs(start_pos[1] - obstacle.y)
+            dist = math.sqrt(dx**2 + dy**2)
+            if dist <= obstacle.size:
+                return False
+        return True
+        
+    def point_in_triangle(self, p, a, b, c):
+        if self.same_side(p, a, b, c) and self.same_side(p, b, a, c) and self.same_side(p, c, a, b):
+            return True
+        else:
+            return False
+
+    def same_side(self, p1, p2, a, b):
+        cp1 = np.cross(np.asarray(b)-np.asarray(a), np.asarray(p1)-np.asarray(a))
+        cp2 = np.cross(np.asarray(b)-np.asarray(a), np.asarray(p2)-np.asarray(a))
+        if np.dot(cp1, cp2) >= 0:
+            return True
+        else:
+            return False
+
+    def within_bounds(self, boundary_list, position):
+        """
+        Check if the given position is within the given booundry expressed as a polygon
+        Paramter: 
+            boundary_list: a list of Motion_plan_state objects that define the corners of the region of interest
+            position: a tuple of two elements (x, y) to test whether it's within the boundary or not 
+        """
+        poly_list = []  
+        for corner in boundary_list: 
+            poly_list.append([corner.x, corner.y])
+
+        centroid = Polygon(poly_list).centroid.coords
+        for index in range(len(poly_list)):
+            if index != len(poly_list)-1:
+                if self.point_in_triangle(position, poly_list[index], poly_list[index+1], centroid):
+                    return True 
+            else:
+                if self.point_in_triangle(position, poly_list[len(poly_list)-1], poly_list[0], centroid):
+                    return True
+        return False # Not within boundary
+
+    def generate_random_start_pos(self): 
+        """"
+        Generate a random start position 
+        that does not collide with obstacles and within bounds
+        """
+        # Set up the environment
+        environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS)
+        obstacle_list = environ[0] + environ[2]
+        boundary_list = environ[1]  
+        # Initialize doable to Flase
+        doable = False
+        while doable == False:
+            random_start_position = (random.randint(-500, 100), random.randint(-200, 200))
+            # check if no collision
+            if self.collision_free(random_start_position, obstacle_list):
+                # check if within bounds
+                if self.within_bounds(boundary_list, random_start_position):
+                    doable = True
+                    return random_start_position
+        if doable == False:
+            return (-100,0)
+
+    def display_multi_astar_trajectory(self, numAUV):
         """
         Display multiple A* trajectories
 
         Parameter:
             None
         """
-        # start = (self.x, self.y)
-        starting_position_list = [(-80, -110), (0, 0)]
+        random_start_pos = self.generate_random_start_pos()
 
         environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS) 
         
         obstacle_list = environ[0]
         boundary_list = environ[1] + environ[2]
-        habitat_list = environ[3] 
+        habitat_list = environ[3]
 
-        AUVS = multiAUV(2, habitat_list, boundary_list, obstacle_list)
+        print("start at: ", random_start_pos)
+        AUVS = multiAUV(numAUV, random_start_pos, habitat_list, boundary_list, obstacle_list)
         # Call multi_AUV with randomized starting positions 
-        # multi_AUV = AUVS.multi_AUV_planner(self.pathLenLimit, self.weights)
+        multi_AUV = AUVS.multi_AUV_planner(self.pathLenLimit, self.weights)
         
         # Call multi_AUV with fixed starting positions 
-        multi_AUV = AUVS.multi_AUV_planner_fixed_start(self.pathLenLimit, self.weights, starting_position_list)
+        # multi_AUV = AUVS.multi_AUV_planner_fixed_start(self.pathLenLimit, self.weights, starting_position_list)
 
         multi_paths = multi_AUV["trajs"]
         multi_costs = multi_AUV["costs"]
-        # print ("\n", "multi_costs length: ", len(multi_costs))
+
+        print("cost: ", multi_costs)
+        return multi_costs # [1st AUV cost, 2nd AUV cost, ...]
 
         X_list = [] # list that holds numAUV-lists of X positions of the trajectory
         Y_list = [] # list that holds numAUV-lists of Y positions of the trajectory
@@ -174,13 +252,48 @@ class astarSim:
                 astar_y_array.append(round(point.y, 2))
             X_list.append(astar_x_array)
             Y_list.append(astar_y_array)
-        # print ("\n", "X_list length: ", len(X_list))
-        self.live_graph.plot_multiple_2d_astar_traj(X_list, Y_list, multi_costs)
+        
+        # Visualize the trajectories
+        # self.live_graph.plot_multiple_2d_astar_traj(X_list, Y_list, multi_costs)
+
+def plot_numAUV_cost():
+    """
+    Generate Plot of number of AUVs vs. Trajectory Cost
+    """
+    robot = astarSim(0, 0, 0, pathLenLimit=100, weights=[0, 10, 1000])
+    maxNumAUV = 10
+    numTrials = 20
+    sumCost = [0] * maxNumAUV
+
+    currTrial = 1
+    while currTrial < numTrials:
+        print("Trial: ", currTrial)
+        cost = robot.display_multi_astar_trajectory(maxNumAUV)
+        sumCost = list(map(add, sumCost, cost))
+        print("sumCost: ", sumCost)
+        currTrial += 1
+        print(end='')
+    
+    aveCost = [item/numTrials for item in sumCost] # Y axis
+    numAUV_list = list(range(1, maxNumAUV+1)) # X axis
+    print("numAUV_list: ", numAUV_list)
+    print("aveCost: ", aveCost)
+
+    fig, ax = plt.subplots()
+    ax.plot(numAUV_list, aveCost)
+    ax.set(xlabel='AUV Number', ylabel='Trajectory Cost', title='Number of AUVs vs. Average Trajectory Cost')
+    ax.grid()
+    plt.show()
 
 def main():
-    pos = create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
-    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=250, weights=[0, 10, 1000])
-    test_robot.display_multi_astar_trajectory()
+    # Visualize trajectories
+    # numAUV = 2
+    # pos = create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
+    # test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=350, weights=[0, 10, 1000])
+    # test_robot.display_multi_astar_trajectory(numAUV)
+
+    # Plot numAUV vs. Cost
+    plot_numAUV_cost()
     # test_robot.display_single_astar_trajectory()
 
 if __name__ == "__main__":

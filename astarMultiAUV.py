@@ -7,10 +7,11 @@ from motion_plan_state import Motion_plan_state
 from itertools import permutations
 
 class multiAUV:
-    def __init__(self, numAUV, habitatList, boundaryList, obstacleList):
+    def __init__(self, numAUV, start, habitatList, boundaryList, obstacleList):
         # self.start = start
         self.multiAUV_habitat_open_list = habitatList[:]
         self.multiAUV_habitat_closed_list = []
+        self.start = start
         self.boundary_list = boundaryList
         self.obstacle_list = obstacleList
         self.numAUV = numAUV
@@ -68,13 +69,10 @@ class multiAUV:
         """
 
         for i in range(self.numAUV):
-            # Radomize the starting position 
-            random_start_position = (random.randint(-400, 0), random.randint(-100, 100))
-            print ("\n", "STARTING AT ", i+1, ": ", random_start_position)
-            single_AUV = singleAUV(random_start_position, self.obstacle_list, self.boundary_list, self.multiAUV_habitat_open_list, self.multiAUV_habitat_closed_list) 
+            single_AUV = singleAUV(self.start, self.obstacle_list, self.boundary_list, self.multiAUV_habitat_open_list, self.multiAUV_habitat_closed_list) 
 
             # plan path for one singleAUV object 
-            single_planner = single_AUV.astar(random_start_position, pathLenLimit, weights)
+            single_planner = single_AUV.astar(self.start, pathLenLimit, weights)
             self.trajectories.append(single_planner["path"])
             self.costs.append(single_planner["cost"])
 
