@@ -5,8 +5,7 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import geopy.distance 
 from motion_plan_state import Motion_plan_state
-from shapely.wkt import loads as load_wkt 
-from shapely.geometry import Polygon 
+
 
 def create_cartesian(pos, origin): 
     """
@@ -84,14 +83,21 @@ OBSTACLES = [Motion_plan_state(33.445113, -118.484508, size=4.479407446738455),
             Motion_plan_state(33.444951, -118.483997, size=12.150680733968928),
             Motion_plan_state(33.444914, -118.483874, size=13.645304514491206),
             Motion_plan_state(33.444862, -118.483741, size=17.812248298199293),
-            Motion_plan_state(33.444779, -118.483577, size=26.601714064649762)]
-
-# BOATS = [Motion_plan_state(33.445425, -118.486314, size=5),
-#         Motion_plan_state(33.444596, -118.485285, size=5),
-#         Motion_plan_state(33.444412, -118.485508, size=5),
-#         Motion_plan_state(33.443940, -118.485384, size=5)]  
+            Motion_plan_state(33.444779, -118.483577, size=26.601714064649762), # dock
+            Motion_plan_state(33.444928, -118.484448, size=5),
+            Motion_plan_state(33.444686, -118.484716, size=5),
+            Motion_plan_state(33.444328, -118.485606, size=5),
+            Motion_plan_state(33.444811, -118.486454, size=5),
+            Motion_plan_state(33.445491, -118.486894, size=5),
+            Motion_plan_state(33.445491, -118.487731, size=5),
+            Motion_plan_state(33.446171, -118.488010, size=5),
+            Motion_plan_state(33.446243, -118.488697, size=5),
+            Motion_plan_state(33.445914, -118.489636, size=5),
+            Motion_plan_state(33.445425, -118.486314, size=5),
+            Motion_plan_state(33.444596, -118.485285, size=5),
+            Motion_plan_state(33.444412, -118.485508, size=5),
+            Motion_plan_state(33.443940, -118.485384, size=5)]
 BOATS = []
-
 HABITATS = [Motion_plan_state(33.444480, -118.486094, size=5),
     Motion_plan_state(33.446198, -118.486652, size=5),
     Motion_plan_state(33.445400, -118.485959, size=5),
@@ -104,9 +110,6 @@ HABITATS = [Motion_plan_state(33.444480, -118.486094, size=5),
     Motion_plan_state(33.444596, -118.485285, size=5),
     Motion_plan_state(33.444412, -118.485508, size=5),
     Motion_plan_state(33.443940, -118.485384, size=5),
-    Motion_plan_state(33.444773, -118.486274, size=5)]
-
-GOAL_LIST = [(33.444928, -118.484448), (33.444686, -118.484716), 
-(33.444328, -118.485606), (33.444811, -118.486454), 
-(33.445491, -118.486894), (33.445491, -118.487731), 
-(33.446171, -118.488010), (33.446243, -118.488697), (33.445914, -118.489636)]
+    Motion_plan_state(33.445615, -118.488283, size=5),
+    Motion_plan_state(33.444862, -118.487402, size=5)]
+  

@@ -219,15 +219,16 @@ class astarSim:
         Parameter:
             None
         """
+        # Turn on switch if we want to visualize trajectories, otherwise turn it off
+        # switch = True 
         random_start_pos = self.generate_random_start_pos()
-
+        print ("start at ", random_start_pos)
         environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS) 
         
         obstacle_list = environ[0]
         boundary_list = environ[1] + environ[2]
         habitat_list = environ[3]
 
-        print("start at: ", random_start_pos)
         AUVS = multiAUV(numAUV, random_start_pos, habitat_list, boundary_list, obstacle_list)
         # Call multi_AUV with randomized starting positions 
         multi_AUV = AUVS.multi_AUV_planner(self.pathLenLimit, self.weights)
@@ -237,9 +238,14 @@ class astarSim:
 
         multi_paths = multi_AUV["trajs"]
         multi_costs = multi_AUV["costs"]
+        # List holds number of habitats covered corresponding to the number of AUVs in disposal
+        multi_habitats = multi_AUV["habitats"] 
 
-        print("cost: ", multi_costs)
-        return multi_costs # [1st AUV cost, 2nd AUV cost, ...]
+        # return multi_habitats
+        # if switch == False:
+        #     # turn on if we chose to visualize trajectories
+        #     print("cost: ", multi_costs)
+        #     return multi_costs # [1st AUV cost, 2nd AUV cost, ...]
 
         X_list = [] # list that holds numAUV-lists of X positions of the trajectory
         Y_list = [] # list that holds numAUV-lists of Y positions of the trajectory
@@ -254,7 +260,34 @@ class astarSim:
             Y_list.append(astar_y_array)
         
         # Visualize the trajectories
-        # self.live_graph.plot_multiple_2d_astar_traj(X_list, Y_list, multi_costs)
+        self.live_graph.plot_multiple_2d_astar_traj(X_list, Y_list, multi_costs)
+
+def plot_numAUV_numHabitat():
+    """
+    Generate a Plot of the number of AUVs vs. number of habitats explored
+    """
+    robot = astarSim(0, 0, 0, pathLenLimit=100, weights=[0, 10, 1000])
+    maxNumAUV = 10
+    numTrials = 20
+    sumHabitats = [0] * maxNumAUV
+    currTrial = 1
+    while currTrial < numTrials:
+        print("Trial: ", currTrial)
+        habitats = robot.display_multi_astar_trajectory(maxNumAUV)
+        sumHabitats = list(map(add, sumHabitats, habitats))
+        print ("sumHabitats: ", sumHabitats)
+        currTrial += 1
+        print(end='')
+    aveHabitat = [item/numTrials for item in sumHabitats] # Y axis
+    numAUV_list = list(range(1, maxNumAUV+1)) # X axis
+    print("numAUV_list: ", numAUV_list)
+    print("aveHabitat: ", aveHabitat)
+
+    fig, ax = plt.subplots()
+    ax.plot(numAUV_list, aveHabitat)
+    ax.set(xlabel='AUV Number', ylabel='Number of Habitats Visited', title='Number of AUVs vs. Number of Visited Habitats')
+    ax.grid()
+    plt.show()
 
 def plot_numAUV_cost():
     """
@@ -287,14 +320,16 @@ def plot_numAUV_cost():
 
 def main():
     # Visualize trajectories
-    # numAUV = 2
-    # pos = create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
-    # test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=350, weights=[0, 10, 1000])
-    # test_robot.display_multi_astar_trajectory(numAUV)
+    numAUV = 2
+    pos = create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
+    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=500, weights=[0, 10, 1000])
+    test_robot.display_multi_astar_trajectory(numAUV)
 
     # Plot numAUV vs. Cost
-    plot_numAUV_cost()
+    # plot_numAUV_cost()
     # test_robot.display_single_astar_trajectory()
-
 if __name__ == "__main__":
+    # plot_numAUV_numHabitat()
     main()
+
+

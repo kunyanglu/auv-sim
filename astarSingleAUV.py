@@ -406,24 +406,24 @@ class singleAUV:
                     self.visited_nodes[x_pos, y_pos] = 1
 
 # def main():
-#     weights = [0, 10, 1000]
-#     start_cartesian = create_cartesian((33.445089, -118.486933), catalina.ORIGIN_BOUND)
-#     start = (round(start_cartesian[0], 2), round(start_cartesian[1], 2))
-#     print ("start: ", start) 
+    # weights = [0, 10, 1000]
+    # start_cartesian = create_cartesian((33.445089, -118.486933), catalina.ORIGIN_BOUND)
+    # start = (round(start_cartesian[0], 2), round(start_cartesian[1], 2))
+    # print ("start: ", start) 
 
-#     #  convert to environment in casrtesian coordinates 
-#     environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS)
+    # #  convert to environment in casrtesian coordinates 
+    # environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS)
     
-#     obstacle_list = environ[0]
-#     boundary_list = environ[1]+environ[2]
-#     habitat_list = environ[3] 
+    # obstacle_list = environ[0]
+    # boundary_list = environ[1]+environ[2]
+    # habitat_list = environ[3] 
 
-#     single_AUV = singleAUV(start, obstacle_list, boundary_list, habitat_list, []) 
-#     final_traj = single_AUV.astar(start, 800, weights)
+    # single_AUV = singleAUV(start, obstacle_list, boundary_list, habitat_list, []) 
+    # final_traj = single_AUV.astar(start, 800, weights)
 
-#     print ("\n", "final trajectory: ",  final_traj["path"])
-#     print ("\n", "Trajectory length: ", len(final_traj["path"]))
-#     print ("\n", "cost of each node on the final trajectory: ",  final_traj["cost"])       
+    # print ("\n", "final trajectory: ",  final_traj["path"])
+    # print ("\n", "Trajectory length: ", len(final_traj["path"]))
+    # print ("\n", "cost of each node on the final trajectory: ",  final_traj["cost"])       
 
 # if __name__ == "__main__":
 #     main()

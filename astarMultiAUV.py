@@ -27,6 +27,7 @@ class multiAUV:
             shark_traj_list: a list of shark trajectories that are lists of Motion_plan_state objects 
         """        
         # Create environment
+        
         environ = catalina.create_environs(catalina.OBSTACLES, catalina.BOUNDARIES, catalina.BOATS, catalina.HABITATS)
         habitat_list = environ[3]
 
@@ -47,7 +48,7 @@ class multiAUV:
                 # plan path for one singleAUV object 
                 single_planner = single_AUV.astar(start, pathLenLimit, weights)
                 self.trajectories.append(single_planner["path"])
-                # print("\n", "Traj: ", single_planner["path"])
+                print("\n", "Traj: ", single_planner["path"])
                 self.costs.append(single_planner["cost"])
 
                 # update overall habitat coverage 
@@ -67,8 +68,11 @@ class multiAUV:
             weights: a list of three numbers [w1, w2, w3] 
             shark_traj_list: a list of shark trajectories that are lists of Motion_plan_state objects 
         """
-
+        # List holds number of habitats covered corresponding to the number of AUVs in disposal
+        count_habitat_visited = []
+        total_habitat_visited = 0 
         for i in range(self.numAUV):
+            # print ("start at: ", self.start)
             single_AUV = singleAUV(self.start, self.obstacle_list, self.boundary_list, self.multiAUV_habitat_open_list, self.multiAUV_habitat_closed_list) 
 
             # plan path for one singleAUV object 
@@ -79,6 +83,8 @@ class multiAUV:
             # update overall habitat coverage 
             self.multiAUV_habitat_open_list = single_AUV.habitat_open_list[:]
             self.multiAUV_habitat_closed_list = single_AUV.habitat_closed_list[:]
+            total_habitat_visited += len(self.multiAUV_habitat_closed_list)
+            count_habitat_visited.append(total_habitat_visited)
             
             # print ("\n", "MultiAUV Open Habitats ", i+1, ": ", self.multiAUV_habitat_open_list)
             # print ("\n", "MultiAUV Closed Habitats ", i+1, ": ", self.multiAUV_habitat_closed_list)
@@ -88,8 +94,7 @@ class multiAUV:
             # print ("\n", "path cost ", i+1, ": ", single_planner["cost"])
 
             del single_AUV
-            
-        return {"trajs" : self.trajectories, "costs" : self.costs}
+        return {"trajs" : self.trajectories, "costs" : self.costs, "habitats" : count_habitat_visited}
 
 # if __name__ == "__main__":
 #     numAUV = 2
