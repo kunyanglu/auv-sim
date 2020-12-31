@@ -437,7 +437,7 @@ class Live3DGraph:
         plt.show()
     
     def plot_multiple_2d_astar_traj(self, x_list, y_list, traj_cost_list):
-        print ("At plot_multiple_2d_astar_traj START", "\n")
+    
         plt.close()
         
         fig, ax = plt.subplots()
@@ -497,7 +497,7 @@ class Live3DGraph:
             plt.plot(x_list[index], y_list[index], marker = ',', color = color, label=cost) 
             legend = plt.legend()
             plt.setp(legend.get_texts(), color='#000000') 
-        print ("At plot_multiple_2d_astar_traj END", "\n")
+
         plt.title('trajectory length and cost visualization')
         plt.xlabel('meter')
         plt.ylabel('meter')

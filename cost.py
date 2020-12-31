@@ -3,13 +3,9 @@ import time
 import statistics
 import matplotlib.pyplot as plt
 import numpy as np
-
-#from rrt_dubins import RRT
 from motion_plan_state import Motion_plan_state
 
 class Cost:
-    #class for building cost function in path planning
-
     def __init__(self):
         self.cost = 0
 
@@ -67,47 +63,44 @@ class Cost:
 
         """
         Calculate the cost of the new edge constructed when the new node is appended to the path list. 
-        The cost of edge accumulates to form the ultimate cost of the particular path under the specified condition.
+        The cost of edge accumulates to form the ultimate cost of the path.
 
-        Parameter: 
+        Parameters: 
             new_node: a Node object represents the next node to connect to the existing path 
-            current_path: a list of Motion_plan_state objects, dynamically changing as more Node objects added to the existing path
-            habitat_open_list: a list of Motion_plan_state objects holds habitats that have been covered 
-            habitat_closed_list: a list of Motion_plan_state objects holds new habitats that have not been covered 
-            weights: a list of three numbers 
+            current_path: a list of Motion_plan_state objects, 
+                        change as more Node objects added to the existing path
+            habitat_open_list: a list of Motion_plan_state objects,
+                               holds habitats that have been covered 
+            habitat_closed_list: a list of Motion_plan_state objects, 
+                                holds new habitats that have not been covered 
+            weights: a list of three coefficients []w1, w2, w3]
         """
 
-        #set the weight for each term in cost function
-        w1 = weights[0]
-        w2 = weights[1]
-        w3 = weights[2]
+        # Initiate the coefficients
+        weight_10 = weights[0]
+        weight_1000 = weights[1]
+        weight_100 = weights[2]
+        # Initiate the flags
+        insideCloseHabitat = 0
+        insideOpenHabitat = 0 
 
-        d_2 = 0 
-        d_3 = 0 
-
-        # # check if inside any of the habitats explored or unexplored
-        # for habi in habitat_open_list+habitat_closed_list:
-        #     dist = math.sqrt((new_node.position[0]-habi.x) **2 + (new_node.position[1]-habi.y) **2)
-        #     if dist <= habi.size:
-        #         d_2 = 1
-
-        # check if inside any of explored habitats
+        # Check if the new node is inside any closed habitat
         for habi in habitat_closed_list:
             dist = math.sqrt((new_node.position[0]-habi.x) **2 + (new_node.position[1]-habi.y) **2)
             if dist <= habi.size:
-                d_2 = 1
+                insideCloseHabitat = 1
+                print ("insideCloseHabitat")
     
-        # check if inside the unexplored habitats
+        # Check if the new node is inside any open habitat
         for habi in habitat_open_list:
             dist = math.sqrt((new_node.position[0]-habi.x) **2 + (new_node.position[1]-habi.y) **2)
-            # print ("dist: ", dist, "habi size: ", habi.size)
             if dist <= habi.size:
-                d_3 = 1
-        
-        cost_of_edge = - w2 * d_2 - w3 * d_3
-        # print ("INSIDE OPEN HABITAT? ", d_3)
+                insideOpenHabitat = 1
+                print ("insideOpenHabitat")
+        # Calculate the cost_of_edge
+        cost_of_edge = - weight_10 * insideCloseHabitat - weight_1000 * insideOpenHabitat
 
-        return ([cost_of_edge, d_2, d_3])
+        return ([cost_of_edge, insideCloseHabitat, insideOpenHabitat])
 
 
     def habitat_time_cost_func(self, path, length, habitats, dist, weights=[1,-1,-1]):
