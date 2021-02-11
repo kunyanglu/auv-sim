@@ -437,7 +437,11 @@ class Live3DGraph:
         plt.show()
     
     def plot_multiple_2d_astar_traj(self, x_list, y_list, traj_cost_list):
+<<<<<<< HEAD
         
+=======
+    
+>>>>>>> 96f4bdb0ee8c8c20b7f0c4becf194855f19cc5a6
         plt.close()
         
         fig, ax = plt.subplots()
@@ -497,7 +501,11 @@ class Live3DGraph:
             plt.plot(x_list[index], y_list[index], marker = ',', color = color, label=cost) 
             legend = plt.legend()
             plt.setp(legend.get_texts(), color='#000000') 
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> 96f4bdb0ee8c8c20b7f0c4becf194855f19cc5a6
         plt.title('trajectory length and cost visualization')
         plt.xlabel('meter')
         plt.ylabel('meter')
