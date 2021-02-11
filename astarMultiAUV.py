@@ -8,7 +8,7 @@ from itertools import permutations
 
 class multiAUV:
     def __init__(self, numAUV, start, habitatList, boundaryList, obstacleList):
-        # self.start = start
+       
         self.multiAUV_habitat_open_list = habitatList[:]
         self.multiAUV_habitat_closed_list = []
         self.start = start
@@ -71,8 +71,9 @@ class multiAUV:
         # List holds number of habitats covered corresponding to the number of AUVs in disposal
         count_habitat_visited = []
         total_habitat_visited = 0 
+
         for i in range(self.numAUV):
-            # print ("start at: ", self.start)
+        
             single_AUV = singleAUV(self.start, self.obstacle_list, self.boundary_list, self.multiAUV_habitat_open_list, self.multiAUV_habitat_closed_list) 
 
             # plan path for one singleAUV object 
@@ -86,8 +87,8 @@ class multiAUV:
             total_habitat_visited += len(self.multiAUV_habitat_closed_list)
             count_habitat_visited.append(total_habitat_visited)
             
-            # print ("\n", "MultiAUV Open Habitats ", i+1, ": ", self.multiAUV_habitat_open_list)
-            # print ("\n", "MultiAUV Closed Habitats ", i+1, ": ", self.multiAUV_habitat_closed_list)
+            print ("\n", "MultiAUV Open Habitats", i+1, ": ", len(self.multiAUV_habitat_open_list))
+            print ("\n", "MultiAUV Closed Habitats", i+1, ": ", len(self.multiAUV_habitat_closed_list))
 
             # print ("\n", "path ", i+1, ": ", single_planner["path"])
             # print ("\n", "path length ", i+1, ": ", len(single_planner["path"]))

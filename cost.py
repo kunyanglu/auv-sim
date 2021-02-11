@@ -82,32 +82,35 @@ class Cost:
         w2 = weights[1]
         w3 = weights[2]
 
-        d_2 = 0 
-        d_3 = 0 
-
-        # # check if inside any of the habitats explored or unexplored
-        # for habi in habitat_open_list+habitat_closed_list:
-        #     dist = math.sqrt((new_node.position[0]-habi.x) **2 + (new_node.position[1]-habi.y) **2)
-        #     if dist <= habi.size:
-        #         d_2 = 1
+        insideAnyHabitats = 0 
+        insideOpenHabitats = 0 
 
         # check if inside any of explored habitats
-        for habi in habitat_closed_list:
+        for habi in habitat_closed_list + habitat_open_list:
             dist = math.sqrt((new_node.position[0]-habi.x) **2 + (new_node.position[1]-habi.y) **2)
             if dist <= habi.size:
-                d_2 = 1
-    
+                insideAnyHabitats = 1
+                # print("child_1: ", (new_node.position[0], new_node.position[1]))
+                # print ("dist_1: ", dist, " ", "habitat size_1: ", habi.size)
+                # print ("insideAnyHabitats: ", insideAnyHabitats)
+                # print ("Num Open: ", len(habitat_open_list), " ", "Num Closed: ", len(habitat_closed_list))
+                break
+        
         # check if inside the unexplored habitats
         for habi in habitat_open_list:
             dist = math.sqrt((new_node.position[0]-habi.x) **2 + (new_node.position[1]-habi.y) **2)
             # print ("dist: ", dist, "habi size: ", habi.size)
             if dist <= habi.size:
-                d_3 = 1
+                insideOpenHabitats = 1
+                # print("child_2: ", (new_node.position[0], new_node.position[1]))
+                # print ("dist_2: ", dist, " ", "habitat size_2: ", habi.size)
+                # print ("insideOpenHabitats: ", insideOpenHabitats)
+                # print ("Num Open: ", len(habitat_open_list), " ", "Num Closed: ", len(habitat_closed_list))
+                break
         
-        cost_of_edge = - w2 * d_2 - w3 * d_3
-        # print ("INSIDE OPEN HABITAT? ", d_3)
+        cost_of_edge = - w2 * insideAnyHabitats - w3 * insideOpenHabitats
 
-        return ([cost_of_edge, d_2, d_3])
+        return ([cost_of_edge, insideAnyHabitats, insideOpenHabitats])
 
 
     def habitat_time_cost_func(self, path, length, habitats, dist, weights=[1,-1,-1]):

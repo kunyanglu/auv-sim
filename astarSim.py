@@ -122,7 +122,7 @@ class astarSim:
         habitat_list = environ[3]
 
         single_AUV = singleAUV(start, obstacle_list, boundary_list, habitat_list, [])
-        final_path_mps = single_AUV.astar(habitat_list, obstacle_list, boundary_list, start, self.pathLenLimit, self.weights)
+        final_path_mps = single_AUV.astar(start, self.pathLenLimit, self.weights)
 
         A_star_traj = final_path_mps["path"]
         A_star_traj_cost = final_path_mps["cost"]
@@ -230,6 +230,7 @@ class astarSim:
         habitat_list = environ[3]
 
         AUVS = multiAUV(numAUV, random_start_pos, habitat_list, boundary_list, obstacle_list)
+
         # Call multi_AUV with randomized starting positions 
         multi_AUV = AUVS.multi_AUV_planner(self.pathLenLimit, self.weights)
         
@@ -239,13 +240,7 @@ class astarSim:
         multi_paths = multi_AUV["trajs"]
         multi_costs = multi_AUV["costs"]
         # List holds number of habitats covered corresponding to the number of AUVs in disposal
-        multi_habitats = multi_AUV["habitats"] 
-
-        # return multi_habitats
-        # if switch == False:
-        #     # turn on if we chose to visualize trajectories
-        #     print("cost: ", multi_costs)
-        #     return multi_costs # [1st AUV cost, 2nd AUV cost, ...]
+        multi_habitats = multi_AUV["habitats"]
 
         X_list = [] # list that holds numAUV-lists of X positions of the trajectory
         Y_list = [] # list that holds numAUV-lists of Y positions of the trajectory
@@ -266,7 +261,7 @@ def plot_numAUV_numHabitat():
     """
     Generate a Plot of the number of AUVs vs. number of habitats explored
     """
-    robot = astarSim(0, 0, 0, pathLenLimit=100, weights=[0, 10, 1000])
+    robot = astarSim(0, 0, 0, pathLenLimit=100, weights=[0, 10, 1000, 100])
     maxNumAUV = 10
     numTrials = 20
     sumHabitats = [0] * maxNumAUV
@@ -320,9 +315,10 @@ def plot_numAUV_cost():
 
 def main():
     # Visualize trajectories
-    numAUV = 2
-    pos = create_cartesian((33.446019, -118.489441), catalina.ORIGIN_BOUND)
-    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=500, weights=[0, 10, 1000])
+    numAUV = 3
+    pos = create_cartesian((33.445089, -118.486933), catalina.ORIGIN_BOUND)
+    test_robot = astarSim(round(pos[0], 2), round(pos[1], 2), 0, pathLenLimit=200, weights=[0, 10, 1000, 100])
+    # test_robot.display_single_astar_trajectory()
     test_robot.display_multi_astar_trajectory(numAUV)
 
     # Plot numAUV vs. Cost
